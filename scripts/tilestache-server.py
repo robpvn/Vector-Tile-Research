@@ -28,6 +28,7 @@ Check tilestache-server.py --help to change these defaults.
 if __name__ == '__main__':
     from datetime import datetime
     from optparse import OptionParser, OptionValueError
+    from werkzeug.wsgi import SharedDataMiddleware
     import os, sys
 
     parser = OptionParser()
@@ -53,5 +54,8 @@ if __name__ == '__main__':
         sys.exit(1)
 
     app = TileStache.WSGITileServer(config=options.file, autoreload=True)
-    run_simple(options.ip, options.port, app)
+
+    """app = SharedDataMiddleware(app, {'/static':  os.path.join(os.path.dirname(__file__), 'static')})"""
+
+    run_simple(options.ip, options.port, app, static_files={"/static":"static"})
 
