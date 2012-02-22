@@ -50,6 +50,8 @@ import sys
 from sys import stderr, modules
 from os.path import realpath, join as pathjoin
 from urlparse import urljoin, urlparse
+from mimetypes import guess_type
+from urllib import urlopen
 from json import dumps
 
 try:
@@ -98,11 +100,18 @@ class Configuration:
           dirpath:
             Local filesystem path for this configuration,
             useful for expanding relative paths.
+          
+        Optional attribute:
+        
+          index:
+            Mimetype, content tuple for default index response.
     """
     def __init__(self, cache, dirpath):
         self.cache = cache
         self.dirpath = dirpath
         self.layers = {}
+        
+        self.index = 'text/plain', 'TileStache bellows hello.'
 
 class Bounds:
     """ Coordinate bounding box for tiles.
@@ -176,6 +185,13 @@ def buildConfiguration(config_dict, dirpath='.'):
     for (name, layer_dict) in config_dict.get('layers', {}).items():
         config.layers[name] = _parseConfigfileLayer(layer_dict, config, dirpath)
 
+    if 'index' in config_dict:
+        index_href = urljoin(dirpath, config_dict['index'])
+        index_body = urlopen(index_href).read()
+        index_type = guess_type(index_href)
+        
+        config.index = index_type[0], index_body
+    
     return config
 
 def enforcedLocalPath(relpath, dirpath, context='Path'):

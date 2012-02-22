@@ -13,7 +13,10 @@ __version__ = 'N.N.N'
 import re
 
 from sys import stdout
-from cgi import parse_qs
+try:
+    from urlparse import parse_qs
+except ImportError:
+    from cgi import parse_qs
 from StringIO import StringIO
 from os.path import dirname, join as pathjoin, realpath
 from datetime import datetime, timedelta
@@ -40,7 +43,7 @@ _recent_tiles = {}
 
 # regular expression for PATH_INFO
 _pathinfo_pat = re.compile(r'^/?(?P<l>\w.+)/(?P<z>\d+)/(?P<x>-?\d+)/(?P<y>-?\d+)\.(?P<e>\w+)$')
-_preview_pat = re.compile(r'^/?(?P<l>\w.+)/preview\.html$')
+_preview_pat = re.compile(r'^/?(?P<l>\w.+)/(preview\.html)?$')
 
 def getTile(layer, coord, extension, ignore_cached=False):
     """ Get a type string and tile binary for a given request layer tile.
@@ -172,12 +175,15 @@ def splitPathInfo(pathinfo):
         
         Example: "/layer/0/0/0.png", leading "/" optional.
     """
-    if _pathinfo_pat.match(pathinfo):
+    if pathinfo == '/':
+        return None, None, None
+    
+    if _pathinfo_pat.match(pathinfo or ''):
         path = _pathinfo_pat.match(pathinfo)
         layer, row, column, zoom, extension = [path.group(p) for p in 'lyxze']
         coord = Coordinate(int(row), int(column), int(zoom))
 
-    elif _preview_pat.match(pathinfo):
+    elif _preview_pat.match(pathinfo or ''):
         path = _preview_pat.match(pathinfo)
         layer, extension = path.group('l'), 'html'
         coord = None
@@ -216,6 +222,12 @@ def requestLayer(config, path_info):
         assert hasattr(config, 'layers'), 'Configuration object must have layers.'
         assert hasattr(config, 'dirpath'), 'Configuration object must have a dirpath.'
     
+    # ensure that path_info is at least a single "/"
+    path_info = '/' + (path_info or '').lstrip('/')
+    
+    if path_info == '/':
+        return Core.Layer(config, None, None)
+
     layername = splitPathInfo(path_info)[0]
     
     if layername not in config.layers:
@@ -223,31 +235,48 @@ def requestLayer(config, path_info):
     
     return config.layers[layername]
 
-def requestHandler(config, path_info, query_string):
+def requestHandler(config_hint, path_info, query_string):
     """ Generate a mime-type and response body for a given request.
     
         Requires a configuration and PATH_INFO (e.g. "/example/0/0/0.png").
         
-        Config parameter can be a file path string for a JSON configuration file
+        Config_hint parameter can be a path string for a JSON configuration file
         or a configuration object with 'cache', 'layers', and 'dirpath' properties.
         
-        Query string is optional and not currently used. Calls getTile()
-        to render actual tiles, and getPreview() to render preview.html.
+        Query string is optional, currently used for JSON callbacks.
+        
+        Calls getTile() to render actual tiles, and getPreview() to render preview.html.
     """
     try:
-        if path_info is None:
-            raise Core.KnownUnknown('Missing path_info in requestHandler().')
-    
-        layer = requestLayer(config, path_info)
-        query = parse_qs(query_string or '')
+        # ensure that path_info is at least a single "/"
+        path_info = '/' + (path_info or '').lstrip('/')
         
+        layer = requestLayer(config_hint, path_info)
+        query = parse_qs(query_string or '')
+        try:
+            callback = query['callback'][0]
+        except KeyError:
+            callback = None
+        
+        #
+        # Special case for index page.
+        #
+        if path_info == '/':
+            return getattr(layer.config, 'index', ('text/plain', 'TileStache says hello.'))
+
         coord, extension = splitPathInfo(path_info)[1:]
         
-        if extension == 'html' and coord is None:
+        if path_info == '/':
+            raise Exception(path_info)
+        
+        elif extension == 'html' and coord is None:
             mimetype, content = getPreview(layer)
 
         else:
             mimetype, content = getTile(layer, coord, extension)
+    
+        if callback and 'json' in mimetype:
+            mimetype, content = 'application/javascript', '%s(%s)' % (callback, content)
 
     except Core.KnownUnknown, e:
         out = StringIO()
@@ -343,7 +372,7 @@ class WSGITileServer:
         except Core.KnownUnknown, e:
             return self._response(start_response, '400 Bad Request', str(e))
 
-        if layer not in self.config.layers:
+        if layer and layer not in self.config.layers:
             return self._response(start_response, '404 Not Found')
 
         mimetype, content = requestHandler(self.config, environ['PATH_INFO'], environ['QUERY_STRING'])

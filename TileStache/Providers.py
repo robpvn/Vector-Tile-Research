@@ -73,6 +73,7 @@ import os
 
 from StringIO import StringIO
 from posixpath import exists
+from thread import allocate_lock
 from urlparse import urlparse, urljoin
 import urllib
 from tempfile import mkstemp
@@ -195,7 +196,9 @@ class Proxy:
             img.paste(tile, (0, 0), tile)
         
         return img
-            
+
+global_mapnik_lock = allocate_lock()
+
 class Mapnik:
     """ Built-in Mapnik provider. Renders map images from Mapnik XML files.
     
@@ -252,12 +255,17 @@ class Mapnik:
                 mapnik.load_map(self.mapnik, filename)
                 os.unlink(filename)
         
-        self.mapnik.width = width
-        self.mapnik.height = height
-        self.mapnik.zoom_to_box(mapnik.Envelope(xmin, ymin, xmax, ymax))
-        
-        img = mapnik.Image(width, height)
-        mapnik.render(self.mapnik, img)
+        #
+        # Mapnik can behave strangely when run in threads, so place a lock on the instance.
+        #
+        if global_mapnik_lock.acquire():
+            self.mapnik.width = width
+            self.mapnik.height = height
+            self.mapnik.zoom_to_box(mapnik.Envelope(xmin, ymin, xmax, ymax))
+            
+            img = mapnik.Image(width, height)
+            mapnik.render(self.mapnik, img)
+            global_mapnik_lock.release()
         
         img = Image.fromstring('RGBA', (width, height), img.tostring())
         

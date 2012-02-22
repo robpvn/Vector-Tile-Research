@@ -132,6 +132,7 @@
       <li><a href="#projections">Projections</a></li>
       <li><a href="#metatiles">Metatiles</a></li>
       <li><a href="#preview">Preview</a></li>
+      <li><a href="#index-page">Index Page</a></li>
     </ul>
   </li>
   <li>
@@ -1393,6 +1394,43 @@ Preview parameters:
     </dd>
 </dl> 
 
+<h4><a id="index-page" name="index-page">Index Page</a></h4>
+
+<p>
+TileStache supports configurable index pages for the front page of an instance.
+A custom index can be specified as a filename relative to the configuration
+location. Typically an HTML document would be given here, but other kinds of
+files such as images can be used, with MIME content-type headers determined by
+<a href="http://docs.python.org/library/mimetypes.html#mimetypes.guess_type">mimetypes.guess_type</a>.
+A simple text greeting is displayed if no index is provided.
+</p>
+ 
+<p>
+Example index page configuration:
+</p>
+
+<pre>
+<span class="bg">{
+  "cache": …,
+  "layers": …,</span>
+  "index": "filename.html"
+  <span class="bg">}
+}</span>
+</pre>
+
+<p>
+Example index page configuration using a remote image:
+</p>
+
+<pre>
+<span class="bg">{
+  "cache": …,
+  "layers": …,</span>
+  "index": "http://tilestache.org/mustaches.jpg"
+  <span class="bg">}
+}</span>
+</pre>
+
 <h2><a id="extending-tilestache" name="extending-tilestache">Extending TileStache</a></h2>
 
 <p>
@@ -1724,7 +1762,8 @@ for examples of custom caches.
 
 <p>
 A complete configuration object includes <var>cache</var>,
-<var>layers</var>, and <var>dirpath</var> properties:
+<var>layers</var>, and <var>dirpath</var> properties and
+optional <var>index</var> property:
 </p>
  
 <dl>
@@ -1746,6 +1785,11 @@ A complete configuration object includes <var>cache</var>,
     <dd>
     Local filesystem path for this configuration, useful for expanding relative
     paths.
+    </dd>
+
+    <dt>index</dt>
+    <dd>
+    Two-element tuple with mime-type and content for installation index page.
     </dd>
 </dl>
 
