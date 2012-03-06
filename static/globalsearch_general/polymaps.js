@@ -935,9 +935,9 @@ po.layer = function(load, unload) {
         + (t.y = tileSize.y * (t.row - tileCenter.row * k)) + ")");
     }
 
-    //RPVN: Counting number of tiles removed
-    var removed = 0;
-    var added = 0;
+    // RPVN: Counting number of tiles removed
+    var removed = 0; // RPVN
+    var added = 0;	// RPVN
     
     // remove tiles that are no longer visible
     for (var key in oldLocks) {
@@ -945,7 +945,7 @@ po.layer = function(load, unload) {
         var t = cache.unload(key);
         t.element.parentNode.removeChild(t.element);
         delete t.proxyRefs;
-        removed++; //RPVN
+        removed++; // RPVN
       }
     }
 
@@ -955,19 +955,16 @@ po.layer = function(load, unload) {
       if (t.element.parentNode != levels[t.level]) {
         levels[t.level].appendChild(t.element);
         if (layer.show) layer.show(t);
-        added++; //RPVN
+        added++; // RPVN
       }
     }
-    
-    //RPVN: Report number of new tiles
-    //console.log ("Added " + added + " Removed " + removed);
 
     // flush the cache, clearing no-longer-needed tiles
     cache.flush();
 
     // dispatch the move event
     layer.dispatch({type: "move", 
-    	added: added, removed: removed}); //RPVN
+    	added: added, removed: removed}); // RPVN
   }
 
   // remove proxy tiles when tiles load
