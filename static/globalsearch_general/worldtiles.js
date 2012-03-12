@@ -12,11 +12,8 @@ var map = po.map()
 
 
 var geoJson_layer = (po.geoJson()
-    .url("http://127.0.0.1:8080/vector_test/{Z}/{X}/{Y}.geojson") //REMEMBER That cross-domain shit is out to kill you at any given time.
+    .url("http://127.0.0.1:8080/vector_test/{Z}/{X}/{Y}.geojson") //Remember to use the ip adress rather than localhost to avoid XDomain trouble
     .on("load", po.stylist()
-    	//.attr("fill", "lightblue")
-    	//.attr("stroke", "lightblue")
-    	//.attr("fill", function(d) { return color(d.properties.UN).color; })
     	.title(function(d) { return d.properties.NAME + ": " + d.properties.UN + " UN"; })
     )
     
@@ -25,8 +22,6 @@ var geoJson_layer = (po.geoJson()
 );
 	
 map.add(geoJson_layer);
-
-
 
 map.add(po.compass()
     .pan("none"));
@@ -67,38 +62,28 @@ var layer_container = document.getElementById("org.polymaps.1").parentNode;
   
 }
 //TODO: Make a more robust load-finished detection
-//TODO: Look at creating a proper SVG union (might want to put that later in the project)
 
 
 function ConcatenateTiles () {
 
-	/*var clippingrect = document.getElementById ("org.polymaps.1");
-	clippingrect.firstChild.setAttribute ("width", 2048);
-	clippingrect.firstChild.setAttribute ("height", 2048);*/
-
-	//var layer_container = document.getElementById("org.polymaps.1").parentNode;
 	var tiles = layer_container.lastChild.children;
 	var tile;
 	var segment;
 	var offsets;
 	var id;
-	//console.log ("Found tiles");
 	
 	var completedFeatures = new Array();
 	var tileSegments;
 	
 	for (var i = 0; i < tiles.length; i++) {
 	
-	
-	
 	//console.log ("tile");
 	tile = tiles[i];
 	
-	//Preprare the tile for larger features
-	
+	//Preprare the tile for larger features	
 	tile.removeAttribute ("clip-path");
 	
-	offsets = FindTileOffset (tile);
+	offsets_dest = FindTileOffset (tile);
 		for (var j = 0; j < tile.children.length; j++) {
 			segment = tile.children[j]
 			//console.log ("fragments");
@@ -120,17 +105,12 @@ function ConcatenateTiles () {
 			}
 			
 			for (var m = 1; m <tileSegments.length; m++) {
-				segment.setAttribute("d", segment.getAttribute("d") + TranslateCoordinates (tileSegments[m].getAttribute("d"), offsets, FindTileOffset (tileSegments[m].parentNode)));
+				CombineSegments (segment, tileSegments[m], offsets_dest);
 				tileSegments[m].parentNode.removeChild (tileSegments[m]);
 			}
 			
 			segment.setAttribute("fill", "lightblue");
 			completedFeatures.push (id);
-			//TEMP
-			//segment.setAttribute("d", segment.getAttribute("d") + TranslateCoordinates ("M100,100L200,200L200,100L100,200L100,100Z", offsets));
-			
-			
-			// To union segments into one tile, you add the tile offset of the "source tile" and substract the tile offset of the "destination tile". You can delete the segment from the source til to avoid mutiple svgs on top of each other. (It shouldn't matter to the polymaps tile cache because it works on the tile level only.)
 		}
 	}
 }
