@@ -31,7 +31,7 @@ map.add(geoJson_layer);
 map.add(po.compass()
     .pan("none"));
     
-//TEST
+
 
 
 var layer_container = document.getElementById("org.polymaps.1").parentNode;  
@@ -48,6 +48,7 @@ var layer_container = document.getElementById("org.polymaps.1").parentNode;
   loaded_tiles++;
   if (loaded_tiles == load_target) {
   	console.log("load target reached");
+  	loaded_tiles = 0;
   	ConcatenateTiles ();
   	
   }
@@ -60,11 +61,14 @@ var layer_container = document.getElementById("org.polymaps.1").parentNode;
   console.log("Removed " + e.removed);
   
   if (e.added != 0) {
-  	load_target = e.added;
+  	load_target = e.added - e.removed;
   	loaded_tiles = 0;
   }
   
 }
+//TODO: Make a more robust load-finished detection
+//TODO: Look at creating a proper SVG union (might want to put that later in the project)
+
 
 function ConcatenateTiles () {
 
@@ -102,8 +106,9 @@ function ConcatenateTiles () {
 			
 			//Getting the unique ID
 			id = segment.getAttribute("UN_code");
-			if (id in completedFeatures) continue;
 			
+			if (id in oc(completedFeatures)) continue;
+
 			tileSegments = [segment];
 			
 			for (var k = i+1; k < tiles.length; k++) {
@@ -125,8 +130,7 @@ function ConcatenateTiles () {
 			//segment.setAttribute("d", segment.getAttribute("d") + TranslateCoordinates ("M100,100L200,200L200,100L100,200L100,100Z", offsets));
 			
 			
-			//TODO: ACTUALLY FINISH THE TODO! (Need to compensate bot ways)
-			//TODO: To union segments into one tile, you add the tile offset of the "source tile" and substract the tile offset of the "destination tile". You can delete the segment from the source til to avoid mutiple svgs on top of each other. (It shouldn't matter to the polymaps tile cache because it works on the tile level only.) Need to write something that parses and works with d attributes first!
+			// To union segments into one tile, you add the tile offset of the "source tile" and substract the tile offset of the "destination tile". You can delete the segment from the source til to avoid mutiple svgs on top of each other. (It shouldn't matter to the polymaps tile cache because it works on the tile level only.)
 		}
 	}
 }
@@ -161,4 +165,14 @@ function TranslateCoordinates (path, offset_dest, offset_source)
 	return result;
 }
 
+//Stupid method to allow us to check if an array contains an object in stupid Javascript
+function oc(a)
+{
+  var o = {};
+  for(var i=0;i<a.length;i++)
+  {
+    o[a[i]]='';
+  }
+  return o;
+}
 
