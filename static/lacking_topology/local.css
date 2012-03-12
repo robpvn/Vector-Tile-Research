@@ -1,0 +1,27 @@
+body {
+  background: #E6E6E6;
+}
+
+.layer path {
+  stroke: #fff;
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+}
+
+#copy {
+  color: #000;
+  opacity: .5;
+}
+
+#copy a {
+  color: #000;
+}
+
+.country:hover {
+  fill: lightcoral;
+  stroke: brown;
+}
+
+.country {
+  fill: lightblue;
+}
