@@ -1,7 +1,7 @@
 var po = org.polymaps;
 
-var loaded_tiles = 0;
-var load_target = 0;
+var tiles_added = 0;
+var tiles_loaded = 0;
 
 var map = po.map()
 	.container(document.getElementById("map").appendChild(po.svg("svg")))
@@ -18,7 +18,7 @@ var geoJson_layer = (po.geoJson()
 	)
 
 	.on("load", load)
-	.on("move", loadedMap)
+	.on("added_tile", tileAdded)
 );
 	
 map.add(geoJson_layer);
@@ -28,6 +28,16 @@ map.add(po.compass()
 
 var layer_container = document.getElementById("org.polymaps.1").parentNode;  
 
+
+function tileAdded (e) {
+	tiles_added++;
+}
+
+function CheckTileCount () {
+	if (tiles_added == tiles_loaded) ConcatenateTiles ();
+}
+
+
 function load(e) {
 	for (var i = 0; i < e.features.length; i++) {
 		var feature = e.features[i].data, d = feature.properties.UN;
@@ -36,29 +46,9 @@ function load(e) {
 		e.features[i].element.setAttribute("fill", "blue");
 		e.features[i].element.setAttribute("UN_code", d);
 	}
-  
-	loaded_tiles++;
-	if (loaded_tiles == load_target) {
-		console.log("load target reached");
-		loaded_tiles = 0;
-		ConcatenateTiles ();
-  	
-	}
+  	tiles_loaded++;
+  	CheckTileCount ();
 } 
-
-//TODO: Make a more robust load-finished detection
-function loadedMap(e) {
-
-	console.log("Added " + e.added);
-	console.log("Removed " + e.removed);
-  
-	if (e.added != 0) {
-		load_target = e.added - e.removed;
-		loaded_tiles = 0;
-	} 
-}
-
-
 
 function ConcatenateTiles () {
 
