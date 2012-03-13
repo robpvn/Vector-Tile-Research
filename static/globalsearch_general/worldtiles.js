@@ -19,6 +19,7 @@ var geoJson_layer = (po.geoJson()
 
 	.on("load", load)
 	.on("added_tile", tileAdded)
+	.on("aborted_tile", tileAborted)
 );
 	
 map.add(geoJson_layer);
@@ -31,6 +32,10 @@ var layer_container = document.getElementById("org.polymaps.1").parentNode;
 
 function tileAdded (e) {
 	tiles_added++;
+}
+
+function tileAborted (e) {
+	tiles_added--;
 }
 
 function CheckTileCount () {

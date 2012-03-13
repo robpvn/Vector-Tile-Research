@@ -1383,7 +1383,11 @@ po.geoJson = function(fetch) {
   }
 
   function unload(tile) {
-    if (tile.request) tile.request.abort(true);
+    //if (tile.request) tile.request.abort(true);
+    if (tile.request) { //RPVN
+    	tile.request.abort(true); //RPVN
+    	geoJson.dispatch({type: "aborted_tile"}); //RPVN
+    } //RPVN
   }
 
   function move() {
