@@ -102,7 +102,8 @@ po.cache = function(load, unload) {
     return map[[c.zoom, c.column, c.row].join("/")];
   };
 
-  cache.load = function(c, projection) {
+  cache.load = function(c, projection, calling_layer) { //RPVN
+  //cache.load = function(c, projection) {
     var key = [c.zoom, c.column, c.row].join("/"),
         tile = map[key];
     if (tile) {
@@ -134,6 +135,7 @@ po.cache = function(load, unload) {
     else tail = tile;
     head = tile;
     n++;
+    calling_layer.dispatch({type: "added_tile"});	//RPVN Gives the signal that a new download request has been placed
     return tile;
   };
 
@@ -878,8 +880,9 @@ po.layer = function(load, unload) {
           z1 = 4 + tileLevel;
 
       for (var x = x0; x < x1; x++) {
-        var t = cache.load({column: x, row: y, zoom: z}, projection);
-        if (!t.ready && !(t.key in newLocks)) {
+        var t = cache.load({column: x, row: y, zoom: z}, projection, layer); //RPVN
+        //var t = cache.load({column: x, row: y, zoom: z}, projection);
+        if (!t.ready && !(t.key in newLocks)) {       
           t.proxyRefs = {};
           var c, full, proxy;
 
@@ -935,17 +938,12 @@ po.layer = function(load, unload) {
         + (t.y = tileSize.y * (t.row - tileCenter.row * k)) + ")");
     }
 
-    // RPVN: Counting number of tiles removed
-    var removed = 0; // RPVN
-    var added = 0;	// RPVN
-    
     // remove tiles that are no longer visible
     for (var key in oldLocks) {
       if (!(key in newLocks)) {
         var t = cache.unload(key);
         t.element.parentNode.removeChild(t.element);
         delete t.proxyRefs;
-        removed++; // RPVN
       }
     }
 
@@ -955,7 +953,6 @@ po.layer = function(load, unload) {
       if (t.element.parentNode != levels[t.level]) {
         levels[t.level].appendChild(t.element);
         if (layer.show) layer.show(t);
-        added++; // RPVN
       }
     }
 
@@ -963,8 +960,7 @@ po.layer = function(load, unload) {
     cache.flush();
 
     // dispatch the move event
-    layer.dispatch({type: "move", 
-    	added: added, removed: removed}); // RPVN
+    layer.dispatch({type: "move"});
   }
 
   // remove proxy tiles when tiles load
