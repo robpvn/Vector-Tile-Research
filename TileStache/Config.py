@@ -42,11 +42,24 @@ can be found in the TileStache.Core module documentation. Another sample:
       }
     }
 
+Configuration also supports these additional settings:
+
+- "logging": one of "debug", "info", "warning", "error" or "critical", as
+  described in Python's logging module: http://docs.python.org/howto/logging.html
+
+- "index": configurable index pages for the front page of an instance.
+  A custom index can be specified as a filename relative to the configuration
+  location. Typically an HTML document would be given here, but other kinds of
+  files such as images can be used, with MIME content-type headers determined
+  by mimetypes.guess_type. A simple text greeting is displayed if no index
+  is provided.
+
 In-depth explanations of the layer components can be found in the module
 documentation for TileStache.Providers, TileStache.Core, and TileStache.Geography.
 """
 
 import sys
+import logging
 from sys import stderr, modules
 from os.path import realpath, join as pathjoin
 from urlparse import urljoin, urlparse
@@ -164,6 +177,24 @@ class Bounds:
     def __str__(self):
         return 'Bound %s - %s' % (self.upper_left_high, self.lower_right_low)
 
+class BoundsList:
+    """ Multiple coordinate bounding boxes for tiles.
+    """
+    def __init__(self, bounds):
+        """ Single argument is a list of Bounds objects.
+        """
+        self.bounds = bounds
+    
+    def excludes(self, tile):
+        """ Check a tile Coordinate against the bounds, return false if none match.
+        """
+        for bound in self.bounds:
+            if not bound.excludes(tile):   
+                return False
+        
+        # Nothing worked.
+        return True
+
 def buildConfiguration(config_dict, dirpath='.'):
     """ Build a configuration dictionary into a Configuration object.
     
@@ -191,6 +222,12 @@ def buildConfiguration(config_dict, dirpath='.'):
         index_type = guess_type(index_href)
         
         config.index = index_type[0], index_body
+    
+    if 'logging' in config_dict:
+        level = config_dict['logging'].upper()
+    
+        if hasattr(logging, level):
+            logging.basicConfig(level=getattr(logging, level))
     
     return config
 
@@ -282,15 +319,15 @@ def _parseConfigfileCache(cache_dict, dirpath):
 def _parseLayerBounds(bounds_dict, projection):
     """
     """
-    north, west = bounds_dict.get('north', None), bounds_dict.get('west', None)
-    south, east = bounds_dict.get('south', None), bounds_dict.get('east', None)
-    high, low = bounds_dict.get('high', None), bounds_dict.get('low', None)
+    north, west = bounds_dict.get('north', 89), bounds_dict.get('west', -180)
+    south, east = bounds_dict.get('south', -89), bounds_dict.get('east', 180)
+    high, low = bounds_dict.get('high', 31), bounds_dict.get('low', 0)
     
     try:
         ul_hi = projection.locationCoordinate(Location(north, west)).zoomTo(high)
         lr_lo = projection.locationCoordinate(Location(south, east)).zoomTo(low)
     except TypeError:
-        raise Core.KnownUnknown('Missing part of bounds for layer, need north, south, east, west, high, and low: ' + dumps(bounds_dict))
+        raise Core.KnownUnknown('Bad bounds for layer, need north, south, east, west, high, and low: ' + dumps(bounds_dict))
     
     return Bounds(ul_hi, lr_lo)
 
@@ -333,10 +370,15 @@ def _parseConfigfileLayer(layer_dict, config, dirpath):
     #
     
     if 'bounds' in layer_dict:
-        if type(layer_dict['bounds']) is not dict:
-            raise Core.KnownUnknown('Layer bounds must be a dictionary, not: ' + dumps(layer_dict['bounds']))
+        if type(layer_dict['bounds']) is dict:
+            layer_kwargs['bounds'] = _parseLayerBounds(layer_dict['bounds'], projection)
     
-        layer_kwargs['bounds'] = _parseLayerBounds(layer_dict['bounds'], projection)
+        elif type(layer_dict['bounds']) is list:
+            bounds = [_parseLayerBounds(b, projection) for b in layer_dict['bounds']]
+            layer_kwargs['bounds'] = BoundsList(bounds)
+    
+        else:
+            raise Core.KnownUnknown('Layer bounds must be a dictionary, not: ' + dumps(layer_dict['bounds']))
     
     #
     # Do the metatile
@@ -386,6 +428,8 @@ def _parseConfigfileLayer(layer_dict, config, dirpath):
         
         elif _class is Providers.UrlTemplate:
             provider_kwargs['template'] = provider_dict['template']
+            if 'referer' in provider_dict:
+                provider_kwargs['referer'] = provider_dict['referer']
         
         elif _class is Providers.Vector.Provider:
             provider_kwargs['driver'] = provider_dict['driver']
@@ -393,6 +437,7 @@ def _parseConfigfileLayer(layer_dict, config, dirpath):
             provider_kwargs['properties'] = provider_dict.get('properties', None)
             provider_kwargs['projected'] = bool(provider_dict.get('projected', False))
             provider_kwargs['verbose'] = bool(provider_dict.get('verbose', False))
+            provider_kwargs['precision'] = bool(provider_dict.get('precision', 6))
             
             if 'spacing' in provider_dict:
                 provider_kwargs['spacing'] = float(provider_dict.get('spacing', 0.0))

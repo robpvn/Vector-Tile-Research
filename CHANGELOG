@@ -1,3 +1,23 @@
+2012-03-18: 1.29.2
+- Ensured that in-process recent tiles features works with metatiles.
+
+2012-03-15: 1.29.1
+- Added debug logging to Mapnik provider.
+
+2012-03-14: 1.29.0
+- Added configurable HTTP referer header to URL Template provider.
+- Added optional precision parameter to Vector provider for JSON output.
+- Added basic logging facility, including getTile() logging at DEBUG level.
+
+2012-02-26: 1.28.0
+- Added new ways to define layer boundaries, including lists and partial limits.
+
+2012-02-26: 1.27.3
+- Fixed a forehead slapper in tilestache-seed.
+
+2012-02-26: 1.27.2
+- Fixed Mapnik fonts path bug.
+
 2012-02-20: 1.27.1
 - Fixed WSGITileServer issue in new Configuration.index support.
 

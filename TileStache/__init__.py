@@ -24,6 +24,7 @@ from urlparse import urljoin, urlparse
 from urllib import urlopen
 from os import getcwd
 from time import time
+import logging
 
 try:
     from json import load as json_load
@@ -32,14 +33,11 @@ except ImportError:
 
 from ModestMaps.Core import Coordinate
 
-import Core
-import Config
-
 # dictionary of configuration objects for requestLayer().
 _previous_configs = {}
 
-# dictionary of tiles seen recently in this process, when ignore_cached is on.
-_recent_tiles = {}
+import Core
+import Config
 
 # regular expression for PATH_INFO
 _pathinfo_pat = re.compile(r'^/?(?P<l>\w.+)/(?P<z>\d+)/(?P<x>-?\d+)/(?P<y>-?\d+)\.(?P<e>\w+)$')
@@ -57,26 +55,20 @@ def getTile(layer, coord, extension, ignore_cached=False):
         This is the main entry point, after site configuration has been loaded
         and individual tiles need to be rendered.
     """
+    start_time = time()
+    
     mimetype, format = layer.getTypeByExtension(extension)
     cache = layer.config.cache
 
-    # key in _recent_tiles
-    _tile = (layer, coord, extension)
-    
     if not ignore_cached:
         # Start by checking for a tile in the cache.
         body = cache.read(layer, coord, format)
-
-    elif _tile in _recent_tiles:
-        # Then look in the bag of recent tiles.
-        body, use_by = _recent_tiles[_tile]
-        if time() > use_by:
-            del _recent_tiles[_tile]
-            body = None
+        tile_from = 'cache'
 
     else:
-        # Bypass the cache
-        body = None
+        # Then look in the bag of recent tiles.
+        body = Core._getRecentTile(layer, coord, format)
+        tile_from = 'recent tiles'
     
     # If no tile was found, dig deeper
     if body is None:
@@ -94,6 +86,7 @@ def getTile(layer, coord, extension, ignore_cached=False):
                 # There's a chance that some other process has
                 # written the tile while the lock was being acquired.
                 body = cache.read(layer, coord, format)
+                tile_from = 'cache after all'
     
             if body is None:
                 # No one else wrote the tile, do it here.
@@ -122,13 +115,15 @@ def getTile(layer, coord, extension, ignore_cached=False):
                 if save:
                     cache.save(body, layer, coord, format)
 
+                tile_from = 'layer.render()'
+
         finally:
             if lockCoord:
                 # Always clean up a lock when it's no longer being used.
                 cache.unlock(layer, lockCoord, format)
     
-    if ignore_cached:
-        _recent_tiles[_tile] = body, time() + 300
+    Core._addRecentTile(layer, coord, format, body)
+    logging.info('TileStache.getTile() %s/%d/%d/%d.%s via %s in %.3f', layer.name(), coord.zoom, coord.column, coord.row, extension, tile_from, time() - start_time)
     
     return mimetype, body
 

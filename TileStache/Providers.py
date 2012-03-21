@@ -70,6 +70,7 @@ For an example of a non-image provider, see TileStache.Vector.Provider.
 """
 
 import os
+import logging
 
 from StringIO import StringIO
 from posixpath import exists
@@ -79,7 +80,9 @@ import urllib
 from tempfile import mkstemp
 from string import Template
 from urllib import urlopen
+import urllib2
 from glob import glob
+from time import time
 
 try:
     import mapnik2 as mapnik
@@ -209,6 +212,9 @@ class Mapnik:
         - mapfile (required)
             Local file path to Mapnik XML file.
     
+        - fonts (optional)
+            Local directory path to *.ttf font files.
+    
         More information on Mapnik and Mapnik XML:
         - http://mapnik.org
         - http://trac.mapnik.org/wiki/XMLGettingStarted
@@ -235,12 +241,20 @@ class Mapnik:
         engine = mapnik.FontEngine.instance()
         
         if fonts:
-            for font in glob(fonts.rstrip('/') + '/*.ttf'):
+            fontshref = urljoin(layer.config.dirpath, fonts)
+            scheme, h, path, q, p, f = urlparse(fontshref)
+            
+            if scheme not in ('file', ''):
+                raise Exception('Fonts from "%s" can\'t be used by Mapnik' % fontshref)
+        
+            for font in glob(path.rstrip('/') + '/*.ttf'):
                 engine.register_font(str(font))
 
     def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom):
         """
         """
+        start_time = time()
+        
         if self.mapnik is None:
             self.mapnik = mapnik.Map(0, 0)
             
@@ -254,6 +268,8 @@ class Mapnik:
     
                 mapnik.load_map(self.mapnik, filename)
                 os.unlink(filename)
+
+            logging.debug('TileStache.Providers.Mapnik.renderArea() %.3f to load %s', time() - start_time, self.mapfile)
         
         #
         # Mapnik can behave strangely when run in threads, so place a lock on the instance.
@@ -268,7 +284,9 @@ class Mapnik:
             global_mapnik_lock.release()
         
         img = Image.fromstring('RGBA', (width, height), img.tostring())
-        
+    
+        logging.debug('TileStache.Providers.Mapnik.renderArea() %dx%d in %.3f from %s', width, height, time() - start_time, self.mapfile)
+    
         return img
 
 class UrlTemplate:
@@ -281,17 +299,21 @@ class UrlTemplate:
         - template (required)
             String with substitutions suitable for use in string.Template.
 
+        - referer (optional)
+            String to use in the "Referer" header when making HTTP requests.
+
         More on string substitutions:
         - http://docs.python.org/library/string.html#template-strings
     """
 
-    def __init__(self, layer, template):
+    def __init__(self, layer, template, referer=None):
         """ Initialize a UrlTemplate provider with layer and template string.
         
             http://docs.python.org/library/string.html#template-strings
         """
         self.layer = layer
         self.template = Template(template)
+        self.referer = referer
 
     def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom):
         """ Return an image for an area.
@@ -302,7 +324,12 @@ class UrlTemplate:
         mapping.update({'xmin': xmin, 'ymin': ymin, 'xmax': xmax, 'ymax': ymax})
         
         href = self.template.safe_substitute(mapping)
-        body = urlopen(href).read()
+        req = urllib2.Request(href)
+        
+        if self.referer:
+            req.add_header('Referer', self.referer)
+        
+        body = urllib2.urlopen(req).read()
         tile = Image.open(StringIO(body)).convert('RGBA')
 
         return tile
