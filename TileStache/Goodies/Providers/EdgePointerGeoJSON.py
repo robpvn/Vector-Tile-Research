@@ -537,7 +537,7 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection):
     print "Bottom Right E: " + str(featureextent[1])
     print "Bottom Right N: " + str(featureextent[2])
     """
-    #Need to remember to do checks for 180 degrees! (Going around the edge of the map)
+    #TODO: Need to remember to do checks for 180 degrees! (Going around the edge of the map)
     
     #Find the tile width (or import it?) and the tile centerpoint
     #tile_width = tileextent[3] - tileextent[2]
@@ -545,6 +545,13 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection):
     tile_width = 1
     tile_center = coord 
     
+    """
+    The search algorithm here is kind of like an iterative "equilateral cross with its arms bent at right angles", where
+    you go out one column/row (depending on perspective) per main iteration and down/across all the columns/rows in the sub-iterations.
+    That way all possible areas are covered and one can hope to hit a match as soon as possible. (In most cases the very first tile to
+    be checked will be a match.)
+    
+    """
     
     #North
     
@@ -555,7 +562,6 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection):
     
     col_count = 0
     
-    #"""
     while continue_col:
         
         col_count += 1
@@ -599,19 +605,189 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection):
             #Check if the feature is within this tile
             if search_tile.Intersects(geometry):
                 print "Found a feature segment"
-                north_neighbour = search_tile
+                north_neighbour_x = row_count
+                north_neighbour_y = col_count
                 continue_col = False
                 break
     
     
-    #East
+    #East - Cols and rows switch x and y, y becomes negative
     
-    #West
+    east_neighbour_x = None
+    east_neighbour_y = None
+    continue_col = True
+    continue_row = True
     
-    #South
+    col_count = 0
+    
     #"""
+    while continue_col:
+        
+        col_count += 1
+        row_count = 0
+        continue_row = True
+        
+        #Make a new tile based on the original centrepoint plus the width added eastwards
+        search_tile = _tile_perimeter_geom(coord.right(col_count * tile_width), projection, False)
+        print "coord is" + str(coord)
+        print "Calculated TPW width: " + str(tileextent[3] - tileextent[2])
+        print "Reported TPW width: " + str(tile_width)
+        print "changed coord is" + str(coord.up(col_count * tile_width) )
+        
+        #Check if the envelope edge is within this tile
+        if not geometry.Contains(search_tile):
+            print "Reached the edge of the cols!"
+            continue_col = False
+        
+        #Check if the feature is within this tile
+        if geometry.Intersects(search_tile): #TODO: Is thir the right function to use?
+            print "Found a feature segment"
+            east_neighbour_x = col_count
+            east_neighbour_y = - row_count
+            break
+            
+        
+        while continue_row:
+            
+            row_count += 1
+            
+            
+            
+            #Make a new tile based on the previous centrepoint plus the width added southwards
+            search_tile = _tile_perimeter_geom(coord.right(col_count * tile_width).down(row_count * tile_width), projection, False)
+            
+            #Check if the envelope edge is within this tile
+            if not geometry.Contains(search_tile):
+                print "Reached the edge of the row."
+                continue_row = False
+            
+            #Check if the feature is within this tile
+            if search_tile.Intersects(geometry):
+                print "Found a feature segment"
+                east_neighbour_x = col_count
+                east_neighbour_y = - row_count
+                continue_col = False
+                break
     
-    return [[north_neighbour_x, north_neighbour_y]]
+    #South - cols and rows like north, both negative
+    
+    south_neighbour_x = None
+    south_neighbour_y = None
+    continue_col = True
+    continue_row = True
+    
+    col_count = 0
+    
+    while continue_col:
+        
+        col_count += 1
+        row_count = 0
+        continue_row = True
+        
+        #Make a new tile based on the original centrepoint plus the width added southwards
+        search_tile = _tile_perimeter_geom(coord.down(col_count * tile_width), projection, False)
+        print "coord is" + str(coord)
+        print "Calculated TPW width: " + str(tileextent[3] - tileextent[2])
+        print "Reported TPW width: " + str(tile_width)
+        print "changed coord is" + str(coord.up(col_count * tile_width) )
+        
+        #Check if the envelope edge is within this tile
+        if not geometry.Contains(search_tile):
+            print "Reached the edge of the cols!"
+            continue_col = False
+        
+        #Check if the feature is within this tile
+        if geometry.Intersects(search_tile): #TODO: Is thir the right function to use?
+            print "Found a feature segment"
+            south_neighbour_x = - row_count
+            south_neighbour_y = - col_count
+            break
+            
+        
+        while continue_row:
+            
+            row_count += 1
+            
+            
+            
+            #Make a new tile based on the previous centrepoint plus the width added westwards
+            search_tile = _tile_perimeter_geom(coord.down(col_count * tile_width).left(row_count * tile_width), projection, False)
+            
+            #Check if the envelope edge is within this tile
+            if not geometry.Contains(search_tile):
+                print "Reached the edge of the row."
+                continue_row = False
+            
+            #Check if the feature is within this tile
+            if search_tile.Intersects(geometry):
+                print "Found a feature segment"
+                south_neighbour_x = - row_count
+                south_neighbour_y = - col_count
+                continue_col = False
+                break
+    
+    
+    #West cols/rows like east, x is negative
+    
+    west_neighbour_x = None
+    west_neighbour_y = None
+    continue_col = True
+    continue_row = True
+    
+    col_count = 0
+    
+    #"""
+    while continue_col:
+        
+        col_count += 1
+        row_count = 0
+        continue_row = True
+        
+        #Make a new tile based on the original centrepoint plus the width added eastwards
+        search_tile = _tile_perimeter_geom(coord.left(col_count * tile_width), projection, False)
+        print "coord is" + str(coord)
+        print "Calculated TPW width: " + str(tileextent[3] - tileextent[2])
+        print "Reported TPW width: " + str(tile_width)
+        print "changed coord is" + str(coord.up(col_count * tile_width) )
+        
+        #Check if the envelope edge is within this tile
+        if not geometry.Contains(search_tile):
+            print "Reached the edge of the cols!"
+            continue_col = False
+        
+        #Check if the feature is within this tile
+        if geometry.Intersects(search_tile): #TODO: Is thir the right function to use?
+            print "Found a feature segment"
+            west_neighbour_x = - col_count
+            west_neighbour_y = row_count
+            break
+            
+        
+        while continue_row:
+            
+            row_count += 1
+            
+            
+            
+            #Make a new tile based on the previous centrepoint plus the width added southwards
+            search_tile = _tile_perimeter_geom(coord.left(col_count * tile_width).up(row_count * tile_width), projection, False)
+            
+            #Check if the envelope edge is within this tile
+            if not geometry.Contains(search_tile):
+                print "Reached the edge of the row."
+                continue_row = False
+            
+            #Check if the feature is within this tile
+            if search_tile.Intersects(geometry):
+                print "Found a feature segment"
+                west_neighbour_x = - col_count
+                west_neighbour_y = row_count
+                continue_col = False
+                break
+    
+    
+    
+    return [[north_neighbour_x, north_neighbour_y], [east_neighbour_x, east_neighbour_y], [south_neighbour_x, south_neighbour_y], [west_neighbour_x, west_neighbour_y]]
 
 class Provider:
     """ Vector Provider for OGR datasources.
