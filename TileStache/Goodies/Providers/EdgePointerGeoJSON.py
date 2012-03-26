@@ -470,6 +470,12 @@ def _get_features(coord, properties, projection, layer, clipped, projected, spac
             continue
         
         if clipped:
+            #RPVN: Need to find the relevant neighbours either before we clip or clip a copy and then find, so that we can insert them at the end
+            
+            nearest_neighbours = _get_nearest_neighbours(geometry, coord, bbox, projection)
+            if nearest_neighbours is not None:
+                print "Northern neighbour is X: " + str(nearest_neighbours[0][0]) + " and Y: " + str(nearest_neighbours[0][1])
+            
             geometry = geometry.Intersection(bbox)
         
         if geometry is None:
@@ -488,9 +494,124 @@ def _get_features(coord, properties, projection, layer, clipped, projected, spac
         geom = json_loads(geometry.ExportToJson())
         prop = _feature_properties(feature, definition, properties)
         
-        features.append({'type': 'Feature', 'properties': prop, 'geometry': geom})
+        if clipped:
+            features.append({'type': 'Feature', 'properties': prop, 'geometry': geom, 'edgepointer': nearest_neighbours}) #RPVN: Need to add the edge pointers here
+        else:
+            features.append({'type': 'Feature', 'properties': prop, 'geometry': geom})
     
     return features
+    
+def _get_nearest_neighbours(geometry, coord, bbox, projection):
+    """
+        Returns a list of adresses for the nearest tiles in each direction that contain
+        segments of the current feature
+        (RPVN)
+    """
+    
+    #Check if the entire feature is contained within the tile, if so return no neighbours
+    if bbox.Contains(geometry):
+        print "Entire feature within bbox"
+        return None
+    else:
+        print "Feature extends beyond bbox"
+    
+    # Check the entire envelope of the feature and gauge how many tiles are within it,
+    # as well as the relative position of our current tile...
+    
+    tileextent = bbox.GetEnvelope()
+    featureextent = geometry.GetEnvelope()
+    """
+    print "Tile Envelope:"
+    print "Top Left E: " + str(tileextent[0])
+    print "Top Left N: " + str(tileextent[3])
+    print "Bottom Right E: " + str(tileextent[1])
+    print "Bottom Right N: " + str(tileextent[2])
+    
+    print "Calculated TPW width: " + str(tileextent[3] - tileextent[2])
+    print "Reported TPW width: " + str(_tile_perimeter_width(coord, projection))
+    
+    
+    print "Feature Envelope:"
+    print "Top Left E: " + str(featureextent[0])
+    print "Top Left N: " + str(featureextent[3])
+    print "Bottom Right E: " + str(featureextent[1])
+    print "Bottom Right N: " + str(featureextent[2])
+    """
+    #Need to remember to do checks for 180 degrees! (Going around the edge of the map)
+    
+    #Find the tile width (or import it?) and the tile centerpoint
+    #tile_width = tileextent[3] - tileextent[2]
+    #tile_width = _tile_perimeter_width(coord, projection)
+    tile_width = 1
+    tile_center = coord 
+    
+    
+    #North
+    
+    north_neighbour_x = None
+    north_neighbour_y = None
+    continue_col = True
+    continue_row = True
+    
+    col_count = 0
+    
+    #"""
+    while continue_col:
+        
+        col_count += 1
+        row_count = 0
+        continue_row = True
+        
+        #Make a new tile based on the original centrepoint plus the width added northwards
+        search_tile = _tile_perimeter_geom(coord.up(col_count * tile_width), projection, False)
+        print "coord is" + str(coord)
+        print "Calculated TPW width: " + str(tileextent[3] - tileextent[2])
+        print "Reported TPW width: " + str(tile_width)
+        print "changed coord is" + str(coord.up(col_count * tile_width) )
+        
+        #Check if the envelope edge is within this tile
+        if not geometry.Contains(search_tile):
+            print "Reached the edge of the cols!"
+            continue_col = False
+        
+        #Check if the feature is within this tile
+        if geometry.Intersects(search_tile): #TODO: Is thir the right function to use?
+            print "Found a feature segment"
+            north_neighbour_x = row_count
+            north_neighbour_y = col_count
+            break
+            
+        
+        while continue_row:
+            
+            row_count += 1
+            
+            
+            
+            #Make a new tile based on the previous centrepoint plus the width added eastwards
+            search_tile = _tile_perimeter_geom(coord.up(col_count * tile_width).right(row_count * tile_width), projection, False)
+            
+            #Check if the envelope edge is within this tile
+            if not geometry.Contains(search_tile):
+                print "Reached the edge of the row."
+                continue_row = False
+            
+            #Check if the feature is within this tile
+            if search_tile.Intersects(geometry):
+                print "Found a feature segment"
+                north_neighbour = search_tile
+                continue_col = False
+                break
+    
+    
+    #East
+    
+    #West
+    
+    #South
+    #"""
+    
+    return [[north_neighbour_x, north_neighbour_y]]
 
 class Provider:
     """ Vector Provider for OGR datasources.
