@@ -1370,6 +1370,9 @@ po.geoJson = function(fetch) {
         }
       }
 
+      g.setAttribute("tile_row", tile.row) //RPVN
+      g.setAttribute("tile_column", tile.column) //RPVN
+
       tile.ready = true;
       updated.push.apply(tile.features, updated);
       geoJson.dispatch({type: "load", tile: tile, features: updated});
