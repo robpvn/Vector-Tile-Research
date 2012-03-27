@@ -1,3 +1,13 @@
+Vector Tiles Research
+
+This is a project to investigate vector tile topology conservation. 
+For practical reasons, it as based on TileStache with extra elements bolted on.
+Compatability with the upstream repository of tilestache is not guranteed.
+
+The original readme for tileStache follows:
+
+-------------------------------------------------------------------------------
+
 TileStache: a stylish alternative for caching your map tiles.
 
 TileStache is a Python-based server application that can serve up map tiles
