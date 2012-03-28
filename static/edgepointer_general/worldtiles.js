@@ -116,7 +116,11 @@ function ConcatenateTiles () {
 			
 			for (var m = 1; m <tileSegments.length; m++) {
 				CombineSegments (segment, tileSegments[m], offsets_dest);
-				tileSegments[m].parentNode.removeChild (tileSegments[m]);
+				//tileSegments[m].parentNode.removeChild (tileSegments[m]);
+				
+				//Instead of removing it like we used to we have keep the pointer attributes,
+				// so we remove only the path content
+				tileSegments[m].setAttribute ("d", "");
 			}
 			
 			segment.setAttribute("fill", "lightblue");

@@ -2,6 +2,9 @@
 /* To union segments into one tile, you add the tile offset of the "source tile" and substract the tile offset of the "destination tile". 
 You can delete the segment from the source til to avoid mutiple svgs on top of each other. (It shouldn't matter to the polymaps tile cache because it works on the tile level only.) */
 function CombineSegments (dest_tile, source_tile, offsets_dest) {
+	
+	if (source_tile.getAttribute("d") == "") return; //Nothing to add to the dest_tile.
+
 	dest_tile.setAttribute("d", dest_tile.getAttribute("d") + TranslateCoordinates (source_tile.getAttribute("d"), offsets_dest, FindTileOffset (source_tile.parentNode)));
 }
 
