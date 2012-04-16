@@ -569,8 +569,6 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection, layer_sref):
         continue_row = True
         
         #Make a new tile based on the original centrepoint plus the width added northwards
-        # We add 5% to the edges to work around OGR not catching intersections when they only overlap a little bit, 
-        # like the northern tips of Iceland.
         search_tile = _tile_perimeter_geom(coord.up(col_count * tile_width), projection, False)
         search_tile.TransformTo(layer_sref)
         print "coord is" + str(coord)
