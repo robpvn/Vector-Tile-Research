@@ -5,8 +5,8 @@ var tiles_loaded = 0;
 
 var map = po.map()
 	.container(document.getElementById("map").appendChild(po.svg("svg")))
-	.center({lat: 50, lon: 10})
-	.zoomRange([2, 7])
+	.center({lat: 63.43061067575344, lon: 10.39280891418456})
+	.zoomRange([2, 20])
 	.zoom(5)
 	.add(po.interact());
 
