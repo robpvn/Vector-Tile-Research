@@ -472,7 +472,7 @@ def _get_features(coord, properties, projection, layer, clipped, projected, spac
         if clipped:
             #RPVN: Need to find the relevant neighbours either before we clip or clip a copy and then find, so that we can insert them at the end
             
-            nearest_neighbours = _get_nearest_neighbours(geometry, coord, bbox, projection)
+            nearest_neighbours = _get_nearest_neighbours(geometry, coord, bbox, projection, layer_sref)
             if nearest_neighbours is not None:
                 print "Northern neighbour is X: " + str(nearest_neighbours[0][0]) + " and Y: " + str(nearest_neighbours[0][1])
             
@@ -501,7 +501,7 @@ def _get_features(coord, properties, projection, layer, clipped, projected, spac
     
     return features
     
-def _get_nearest_neighbours(geometry, coord, bbox, projection):
+def _get_nearest_neighbours(geometry, coord, bbox, projection, layer_sref):
     """
         Returns a list of adresses for the nearest tiles in each direction that contain
         segments of the current feature
@@ -571,7 +571,8 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection):
         #Make a new tile based on the original centrepoint plus the width added northwards
         # We add 5% to the edges to work around OGR not catching intersections when they only overlap a little bit, 
         # like the northern tips of Iceland.
-        search_tile = _tile_perimeter_geom(coord.up(col_count * tile_width), projection, True)
+        search_tile = _tile_perimeter_geom(coord.up(col_count * tile_width), projection, False)
+        search_tile.TransformTo(layer_sref)
         print "coord is" + str(coord)
         print "Calculated TPW width: " + str(tileextent[3] - tileextent[2])
         print "Reported TPW width: " + str(tile_width)
@@ -597,7 +598,8 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection):
             
             
             #Make a new tile based on the previous centrepoint plus the width added eastwards
-            search_tile = _tile_perimeter_geom(coord.up(col_count * tile_width).right(row_count * tile_width), projection, True)
+            search_tile = _tile_perimeter_geom(coord.up(col_count * tile_width).right(row_count * tile_width), projection, False)
+            search_tile.TransformTo(layer_sref)
             
             #Check if the envelope edge is within this tile
             if not geometry.Contains(search_tile):
@@ -630,7 +632,8 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection):
         continue_row = True
         
         #Make a new tile based on the original centrepoint plus the width added eastwards
-        search_tile = _tile_perimeter_geom(coord.right(col_count * tile_width), projection, True)
+        search_tile = _tile_perimeter_geom(coord.right(col_count * tile_width), projection, False)
+        search_tile.TransformTo(layer_sref)
         #print "coord is" + str(coord)
         #print "Calculated TPW width: " + str(tileextent[3] - tileextent[2])
         #print "Reported TPW width: " + str(tile_width)
@@ -656,7 +659,8 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection):
             
             
             #Make a new tile based on the previous centrepoint plus the width added southwards
-            search_tile = _tile_perimeter_geom(coord.right(col_count * tile_width).down(row_count * tile_width), projection, True)
+            search_tile = _tile_perimeter_geom(coord.right(col_count * tile_width).down(row_count * tile_width), projection, False)
+            search_tile.TransformTo(layer_sref)
             
             #Check if the envelope edge is within this tile
             if not geometry.Contains(search_tile):
@@ -687,7 +691,8 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection):
         continue_row = True
         
         #Make a new tile based on the original centrepoint plus the width added southwards
-        search_tile = _tile_perimeter_geom(coord.down(col_count * tile_width), projection, True)
+        search_tile = _tile_perimeter_geom(coord.down(col_count * tile_width), projection, False)
+        search_tile.TransformTo(layer_sref)
         #print "coord is" + str(coord)
         #print "Calculated TPW width: " + str(tileextent[3] - tileextent[2])
         #print "Reported TPW width: " + str(tile_width)
@@ -713,7 +718,8 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection):
             
             
             #Make a new tile based on the previous centrepoint plus the width added westwards
-            search_tile = _tile_perimeter_geom(coord.down(col_count * tile_width).left(row_count * tile_width), projection, True)
+            search_tile = _tile_perimeter_geom(coord.down(col_count * tile_width).left(row_count * tile_width), projection, False)
+            search_tile.TransformTo(layer_sref)
             
             #Check if the envelope edge is within this tile
             if not geometry.Contains(search_tile):
@@ -746,7 +752,8 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection):
         continue_row = True
         
         #Make a new tile based on the original centrepoint plus the width added eastwards
-        search_tile = _tile_perimeter_geom(coord.left(col_count * tile_width), projection, True)
+        search_tile = _tile_perimeter_geom(coord.left(col_count * tile_width), projection, False)
+        search_tile.TransformTo(layer_sref)
         #print "coord is" + str(coord)
        # print "Calculated TPW width: " + str(tileextent[3] - tileextent[2])
        # print "Reported TPW width: " + str(tile_width)
@@ -772,7 +779,8 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection):
             
             
             #Make a new tile based on the previous centrepoint plus the width added southwards
-            search_tile = _tile_perimeter_geom(coord.left(col_count * tile_width).up(row_count * tile_width), projection, True)
+            search_tile = _tile_perimeter_geom(coord.left(col_count * tile_width).up(row_count * tile_width), projection, False)
+            search_tile.TransformTo(layer_sref)
             
             #Check if the envelope edge is within this tile
             if not geometry.Contains(search_tile):
