@@ -58,6 +58,12 @@ configuration file as a dictionary:
   of downstream caches. Causes TileStache responses to include Cache-Control
   and Expires HTTP response headers. Useful when TileStache is itself hosted
   behind an HTTP cache such as Squid, Cloudfront, or Akamai.
+- "redirects" is an optional dictionary of per-extension HTTP redirects,
+  treated as lowercase. Useful in cases where your tile provider can support
+  many formats but you want to enforce limits to save on cache usage.
+  If a request is made for a tile with an extension in the dictionary keys,
+  a response can be generated that redirects the client to the same tile
+  with another extension.
 - "jpeg options" is an optional dictionary of JPEG creation options, passed
   through to PIL: http://www.pythonware.com/library/pil/handbook/format-jpeg.htm.
 - "png options" is an optional dictionary of PNG creation options, passed
@@ -278,6 +284,9 @@ class Layer:
           max_cache_age:
             Number of seconds that tiles from this layer may be cached by downstream clients.
 
+          redirects:
+            Dictionary of per-extension HTTP redirects, treated as lowercase.
+
           preview_lat:
             Starting latitude for slippy map layer preview, default 37.80.
 
@@ -290,7 +299,7 @@ class Layer:
           preview_ext:
             Tile name extension for slippy map layer preview, default "png".
     """
-    def __init__(self, config, projection, metatile, stale_lock_timeout=15, cache_lifespan=None, write_cache=True, allowed_origin=None, max_cache_age=None, preview_lat=37.80, preview_lon=-122.26, preview_zoom=10, preview_ext='png', bounds=None):
+    def __init__(self, config, projection, metatile, stale_lock_timeout=15, cache_lifespan=None, write_cache=True, allowed_origin=None, max_cache_age=None, redirects=None, preview_lat=37.80, preview_lon=-122.26, preview_zoom=10, preview_ext='png', bounds=None):
         self.provider = None
         self.config = config
         self.projection = projection
@@ -301,6 +310,7 @@ class Layer:
         self.write_cache = write_cache
         self.allowed_origin = allowed_origin
         self.max_cache_age = max_cache_age
+        self.redirects = redirects or dict()
         
         self.preview_lat = preview_lat
         self.preview_lon = preview_lon
@@ -533,6 +543,16 @@ class NoTileLeftBehind(Exception):
         self.tile = tile
         Exception.__init__(self, tile)
 
+class TheTileIsInAnotherCastle(Exception):
+    """ Ask a client to look someplace else for a tile.
+    
+        This exception can be thrown in a provider to signal
+        to HTTP clients that a tile should be asked-for elsewhere.
+    """
+    def __init__(self, path_info):
+        self.path_info = path_info
+        Exception.__init__(self, path_info)
+
 def _preview(layer):
     """ Get an HTML response for a given named layer.
     """
@@ -546,19 +566,31 @@ def _preview(layer):
 <head>
     <title>TileStache Preview: %(layername)s</title>
     <script src="http://code.modestmaps.com/tilestache/modestmaps.min.js" type="text/javascript"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;">
+    <style type="text/css">
+        html, body, #map {
+            position: absolute;
+            width: 100%%;
+            height: 100%%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
 </head>
-<body style="position: absolute; width: 100%%; height: 100%%;">
-    <script type="text/javascript">
+<body>
+    <div id="map"></div>
+    <script type="text/javascript" defer>
     <!--
-    
         var template = '{Z}/{X}/{Y}.%(ext)s';
         var provider = new com.modestmaps.TemplatedMapProvider(template);
-        var map = new MM.Map(document.body, provider);
+        var map = new MM.Map('map', provider, null, [
+            new MM.TouchHandler(),
+            new MM.DragHandler(),
+            new MM.DoubleClickHandler()
+        ]);
         map.setCenterZoom(new com.modestmaps.Location(%(lat).6f, %(lon).6f), %(zoom)d);
         // hashify it
         new MM.Hash(map);
-    
     //-->
     </script>
 </body>

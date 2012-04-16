@@ -72,14 +72,18 @@ doc:
 	pydoc -w TileStache.Goodies
 	pydoc -w TileStache.Goodies.Caches
 	pydoc -w TileStache.Goodies.Caches.LimitedDisk
+	pydoc -w TileStache.Goodies.Caches.GoogleCloud
 	pydoc -w TileStache.Goodies.Providers
 	pydoc -w TileStache.Goodies.Providers.Composite
 	pydoc -w TileStache.Goodies.Providers.PostGeoJSON
 	pydoc -w TileStache.Goodies.Providers.SolrGeoJSON
 	pydoc -w TileStache.Goodies.Providers.MapnikGrid
 	pydoc -w TileStache.Goodies.Providers.MirrorOSM
+	pydoc -w TileStache.Goodies.Providers.Monkeycache
+	pydoc -w TileStache.Goodies.Providers.UtfGridComposite
 	pydoc -w TileStache.Goodies.Providers.Grid
 	pydoc -w TileStache.Goodies.Providers.GDAL
+	pydoc -w TileStache.Goodies.AreaServer
 
 	pydoc -w scripts/tilestache-*.py
 

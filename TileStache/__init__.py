@@ -188,6 +188,17 @@ def splitPathInfo(pathinfo):
 
     return layer, coord, extension
 
+def mergePathInfo(layer, coord, extension):
+    """ Converts layer name, coordinate and extension back to a PATH_INFO string.
+    
+        See also splitPathInfo().
+    """
+    z = coord.zoom
+    x = coord.column
+    y = coord.row
+    
+    return '/%(layer)s/%(z)d/%(x)d/%(y)d.%(extension)s' % locals()
+
 def requestLayer(config, path_info):
     """ Return a Layer.
     
@@ -267,6 +278,11 @@ def requestHandler(config_hint, path_info, query_string):
         elif extension == 'html' and coord is None:
             mimetype, content = getPreview(layer)
 
+        elif extension.lower() in layer.redirects:
+            other_extension = layer.redirects[extension.lower()]
+            other_path_info = mergePathInfo(layer.name(), coord, other_extension)
+            raise Core.TheTileIsInAnotherCastle(other_path_info)
+        
         else:
             mimetype, content = getTile(layer, coord, extension)
     
@@ -300,7 +316,21 @@ def cgiHandler(environ, config='./tilestache.cfg', debug=False):
     path_info = environ.get('PATH_INFO', None)
     query_string = environ.get('QUERY_STRING', None)
     
-    mimetype, content = requestHandler(config, path_info, query_string)
+    try:
+        mimetype, content = requestHandler(config, path_info, query_string)
+    
+    except Core.TheTileIsInAnotherCastle, e:
+        other_uri = environ['SCRIPT_NAME'] + e.path_info
+        
+        if query_string:
+            other_uri += '?' + query_string
+
+        print >> stdout, 'Status: 302 Found'
+        print >> stdout, 'Location:', other_uri
+        print >> stdout, 'Content-Type: text/plain\n'
+        print >> stdout, 'You are being redirected to', other_uri
+        return
+    
     layer = requestLayer(config, path_info)
     
     if layer.allowed_origin:
@@ -370,7 +400,18 @@ class WSGITileServer:
         if layer and layer not in self.config.layers:
             return self._response(start_response, '404 Not Found')
 
-        mimetype, content = requestHandler(self.config, environ['PATH_INFO'], environ['QUERY_STRING'])
+        try:
+            mimetype, content = requestHandler(self.config, environ['PATH_INFO'], environ['QUERY_STRING'])
+        
+        except Core.TheTileIsInAnotherCastle, e:
+            other_uri = environ['SCRIPT_NAME'] + e.path_info
+            
+            if environ['QUERY_STRING']:
+                other_uri += '?' + environ['QUERY_STRING']
+    
+            start_response('302 Found', [('Location', other_uri), ('Content-Type', 'text/plain')])
+            return ['You are being redirected to %s\n' % other_uri]
+        
         request_layer = requestLayer(self.config, environ['PATH_INFO'])
         allowed_origin = request_layer.allowed_origin
         max_cache_age = request_layer.max_cache_age
