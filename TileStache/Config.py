@@ -358,6 +358,9 @@ def _parseConfigfileLayer(layer_dict, config, dirpath):
     if 'maximum cache age' in layer_dict:
         layer_kwargs['max_cache_age'] = int(layer_dict['maximum cache age'])
     
+    if 'redirects' in layer_dict:
+        layer_kwargs['redirects'] = dict(layer_dict['redirects'])
+    
     if 'preview' in layer_dict:
         preview_dict = layer_dict['preview']
         
@@ -437,7 +440,7 @@ def _parseConfigfileLayer(layer_dict, config, dirpath):
             provider_kwargs['properties'] = provider_dict.get('properties', None)
             provider_kwargs['projected'] = bool(provider_dict.get('projected', False))
             provider_kwargs['verbose'] = bool(provider_dict.get('verbose', False))
-            provider_kwargs['precision'] = bool(provider_dict.get('precision', 6))
+            provider_kwargs['precision'] = int(provider_dict.get('precision', 6))
             
             if 'spacing' in provider_dict:
                 provider_kwargs['spacing'] = float(provider_dict.get('spacing', 0.0))
