@@ -129,7 +129,7 @@ function ConcatenateTiles () {
 				tileSegments[m].setAttribute ("d", "");
 			}
 			
-			segment.setAttribute("fill", "lightblue");
+			//segment.setAttribute("fill", "lightblue");
 			completedFeatures.push (id);
 		}
 	}

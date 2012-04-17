@@ -2,11 +2,7 @@ body {
   background: #E6E6E6;
 }
 
-.layer path {
-  stroke: #fff;
-  stroke-width: 1.5px;
-  vector-effect: non-scaling-stroke;
-}
+
 
 #copy {
   color: #000;
@@ -17,8 +13,15 @@ body {
   color: #000;
 }
 
+.building {
+fill: lightblue;
+  opacity: 0.01;
+  stroke-width: 0.1px;
+}
+
 .building:hover {
   fill: lightcoral;
   stroke: lightcoral;
+  opacity: .5;
   stroke-width: 0.1px;
 }
