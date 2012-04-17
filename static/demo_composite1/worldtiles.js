@@ -5,7 +5,7 @@ var tiles_loaded = 0;
 
 var map = po.map()
 	.container(document.getElementById("map").appendChild(po.svg("svg")))
-	.center({lat: 63.585, lon: 10.39280891418456})
+	.center({lat: 63.43, lon: 10.39280891418456})
 	.zoomRange([1, 20])
 	.zoom(16)
 	.add(po.interact());
@@ -54,7 +54,7 @@ function load(e) {
 		var feature = e.features[i].data, d = feature.properties.osm_id;
 		//console.log (feature.properties.NAME + " NR: " + d);
 		e.features[i].element.setAttribute("class", "building"); //Could probably be done better
-		e.features[i].element.setAttribute("fill", "blue");
+		//e.features[i].element.setAttribute("fill", "blue");
 		e.features[i].element.setAttribute("OSM_id", d);
 		if (feature.edgepointer) {
 			e.features[i].element.setAttribute("edgepointers", "yes");
