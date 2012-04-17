@@ -473,8 +473,8 @@ def _get_features(coord, properties, projection, layer, clipped, projected, spac
             #RPVN: Need to find the relevant neighbours either before we clip or clip a copy and then find, so that we can insert them at the end
             
             nearest_neighbours = _get_nearest_neighbours(geometry, coord, bbox, projection, layer_sref)
-            if nearest_neighbours is not None:
-                print "Northern neighbour is X: " + str(nearest_neighbours[0][0]) + " and Y: " + str(nearest_neighbours[0][1])
+            #if nearest_neighbours is not None:
+                #print "Northern neighbour is X: " + str(nearest_neighbours[0][0]) + " and Y: " + str(nearest_neighbours[0][1])
             
             geometry = geometry.Intersection(bbox)
         
@@ -488,9 +488,16 @@ def _get_features(coord, properties, projection, layer, clipped, projected, spac
         elif spacing is not None:
             mask = geometry.Buffer(buffer, 2)
         
+        #print "Pre-transform N coord is: " + str(geometry.Centroid().GetY())
+        
         geometry.AssignSpatialReference(layer_sref)
         geometry.TransformTo(output_sref)
-
+	
+	#DEBUG: print out coords before export to JSON
+	
+	#print "Pre-export N coord is: " + str(geometry.Centroid().GetY())
+	#print "Pre-export sfref is: " + output_sref.ExportToProj4()
+	
         geom = json_loads(geometry.ExportToJson())
         prop = _feature_properties(feature, definition, properties)
         
@@ -510,10 +517,10 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection, layer_sref):
     
     #Check if the entire feature is contained within the tile, if so return no neighbours
     if bbox.Contains(geometry):
-        print "Entire feature within bbox"
+        #print "Entire feature within bbox"
         return None
-    else:
-        print "Feature extends beyond bbox"
+    #else:
+        #print "Feature extends beyond bbox"
     
     # Check the entire envelope of the feature and gauge how many tiles are within it,
     # as well as the relative position of our current tile...
@@ -571,19 +578,19 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection, layer_sref):
         #Make a new tile based on the original centrepoint plus the width added northwards
         search_tile = _tile_perimeter_geom(coord.up(col_count * tile_width), projection, False)
         search_tile.TransformTo(layer_sref)
-        print "coord is" + str(coord)
-        print "Calculated TPW width: " + str(tileextent[3] - tileextent[2])
-        print "Reported TPW width: " + str(tile_width)
-        print "changed coord is" + str(coord.up(col_count * tile_width) )
+        #print "coord is" + str(coord)
+        #print "Calculated TPW width: " + str(tileextent[3] - tileextent[2])
+        #print "Reported TPW width: " + str(tile_width)
+        #print "changed coord is" + str(coord.up(col_count * tile_width) )
         
         #Check if the envelope edge is within this tile
         if not geometry.Contains(search_tile):
-            print "Reached the edge of the cols, col count is " + str(col_count)
+            #print "Reached the edge of the cols, col count is " + str(col_count)
             continue_col = False
         
         #Check if the feature is within this tile
         if search_tile.Intersects(geometry): #TODO: Is thir the right function to use?
-            print "Found a feature segment, North, Row 0"
+            #print "Found a feature segment, North, Row 0"
             north_neighbour_x = row_count
             north_neighbour_y = col_count
             break
@@ -601,12 +608,12 @@ def _get_nearest_neighbours(geometry, coord, bbox, projection, layer_sref):
             
             #Check if the envelope edge is within this tile
             if not geometry.Contains(search_tile):
-                print "Reached the edge of the row, row count is " + str(row_count)
+                #print "Reached the edge of the row, row count is " + str(row_count)
                 continue_row = False
             
             #Check if the feature is within this tile
             if search_tile.Intersects(geometry):
-                print "Found a feature segment, North, Row > 0"
+                #print "Found a feature segment, North, Row > 0"
                 north_neighbour_x = row_count
                 north_neighbour_y = col_count
                 continue_col = False
