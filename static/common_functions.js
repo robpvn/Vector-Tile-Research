@@ -1,3 +1,5 @@
+//------------------------ Feature combination methods ----------------------------------
+
 // Nice to have this as a common function with an eye to improving it
 /* To union segments into one tile, you add the tile offset of the "source tile" and substract the tile offset of the "destination tile". 
 You can delete the segment from the source til to avoid mutiple svgs on top of each other. (It shouldn't matter to the polymaps tile cache because it works on the tile level only.) */
@@ -35,6 +37,8 @@ function TranslateCoordinates (path, offset_dest, offset_source) {
 	return result;
 }
 
+//------------------------ Misc helper methods ----------------------------------
+
 //Method to allow us to check if an array contains an object in stupid Javascript
 function oc(a) {
 	var o = {};
@@ -43,5 +47,46 @@ function oc(a) {
 		o[a[i]]='';
 	}
 	return o;
+}
+
+//------------------------ Tile addressing methods ----------------------------------
+
+//Helper to check if a tile is already visited since the "in visitedTiles methoed doesn't work b/c it's fetched aa a new object everytime)
+//Returns true if it's in the list or null
+function CheckForVisits (tile, visitedTiles) {
+	
+	if (!tile) return true;
+	
+	for (var i = 0; i < visitedTiles.length; i++) {
+		if (tile.getAttribute ("tile_row") == visitedTiles[i].getAttribute ("tile_row") 
+		    && tile.getAttribute ("tile_column") == visitedTiles[i].getAttribute ("tile_column"))
+			return true;
+	}
+	
+	return false;
+}
+
+//Returns a tile when given a relative pointer text like "0,1"
+function FindTile (current_tile, tilepointer_text) {
+	var components = tilepointer_text.split(',');
+	var target_x = parseInt (current_tile.getAttribute ("tile_column")) + parseInt (components[0]);
+	var target_y = parseInt (current_tile.getAttribute ("tile_row")) - parseInt (components[1]); //Switcharoo b/c of opposite coordinate system!
+	
+	//Find the tile with that address
+	
+	var tiles = layer_container.lastChild.children;
+	
+	//console.log ("Looking for tile pointed to");
+	
+	for (var i = 0; i < tiles.length; i++) {
+		if (tiles[i].getAttribute ("tile_row") == target_y && tiles[i].getAttribute ("tile_column") == target_x) {
+			//console.log ("Found tile being pointed to");
+			return tiles[i];
+		}
+	}
+	
+	//IF we're here then the aforementioned tile hasn't been loaded. TODO: Here is where you might force the loading
+	
+	return null;
 }
 
