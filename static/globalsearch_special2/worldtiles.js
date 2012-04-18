@@ -55,6 +55,7 @@ function load(e) {
   	CheckTileCount ();
 } 
 
+//TODO: Change this method to make it special.
 function ConcatenateTiles () {
 
 	var tiles = layer_container.lastChild.children;
@@ -65,6 +66,7 @@ function ConcatenateTiles () {
 	
 	var completedFeatures = new Array();
 	var tileSegments;
+	var visitedTiles;
 	
 	for (var i = 0; i < tiles.length; i++) {
 	
@@ -75,6 +77,7 @@ function ConcatenateTiles () {
 	tile.removeAttribute ("clip-path");
 	
 	offsets_dest = FindTileOffset (tile);
+		//For each feature segment
 		for (var j = 0; j < tile.children.length; j++) {
 			segment = tile.children[j]
 			//console.log ("fragments");
@@ -85,8 +88,11 @@ function ConcatenateTiles () {
 			
 			if (id in oc(completedFeatures)) continue;
 
-			tileSegments = [segment];
+			tileSegments = [];
+			visitedTiles = [];
+			//Look for neighbours
 			
+			/*
 			for (var k = i+1; k < tiles.length; k++) {
 				for (var l = 0; l < tiles[k].children.length; l++) {
 					if (tiles[k].children[l].getAttribute("OSM_id") == id) {
@@ -94,6 +100,11 @@ function ConcatenateTiles () {
 					}
 				}
 			}
+			*/
+			
+			tileSegments = FindFeatureNeighbours(id, tile, tileSegments, visitedTiles);
+			
+			//Combine segments
 			
 			for (var m = 1; m <tileSegments.length; m++) {
 				CombineSegments (segment, tileSegments[m], offsets_dest);
@@ -104,5 +115,72 @@ function ConcatenateTiles () {
 			completedFeatures.push (id);
 		}
 	}
+}
+
+function FindFeatureNeighbours(id, tile, tileSegments, visitedTiles) {
+	
+	if (CheckForVisits (tile, visitedTiles)) {
+		return tileSegments;
+	}
+	
+	visitedTiles.push (tile);
+
+	for (var j = 0; j < tile.children.length; j++) {
+		
+		//If we find a match we add it straightaway
+		segment = tile.children[j]
+		
+		
+		if (segment.getAttribute("OSM_id") == id) { 
+		
+			tileSegments.push (segment)
+			//This segment matches the ID, check for neighbours
+			
+			//Get the path
+			var paintingInstructions = Raphael.parsePathString(segment.getAttribute("d"));
+			
+			//var northCrossed, eastCrossed, southCrossed, westCrossed = false;
+			
+			//Check for crossings to the north
+			for (var i = 0; i < paintingInstructions.length; i++) {
+				if (paintingInstructions[i][2] <= 0.1) {
+					var nextTile = FindTile (tile, "0,1");
+					tileSegments = FindFeatureNeighbours(id, nextTile, tileSegments, visitedTiles);
+					break; //We've foun a reason to cross the border, no need to contunue searching.
+				}
+			}
+			
+			//Check for crossings to the east
+			for (var i = 0; i < paintingInstructions.length; i++) {
+				if (paintingInstructions[i][1] >= 255.9) {
+					var nextTile = FindTile (tile, "1,0");
+					tileSegments = FindFeatureNeighbours(id, nextTile, tileSegments, visitedTiles);
+					break;
+				}
+			}
+			
+			//Check for crossings to the south
+			for (var i = 0; i < paintingInstructions.length; i++) {
+				if (paintingInstructions[i][2] >= 255.9) {
+					var nextTile = FindTile (tile, "0,-1");
+					tileSegments = FindFeatureNeighbours(id, nextTile, tileSegments, visitedTiles);
+					break;
+				}
+			}
+			
+			//Check for crossings to the west
+			for (var i = 0; i < paintingInstructions.length; i++) {
+				if (paintingInstructions[i][1] <= 0.1) {
+					var nextTile = FindTile (tile, "-1,0");
+					tileSegments = FindFeatureNeighbours(id, nextTile, tileSegments, visitedTiles);
+					break;
+				}
+			}
+			break; //We've found our segment, breakout of the search loop
+		}	
+	}
+	
+	return tileSegments;
+
 }
 
