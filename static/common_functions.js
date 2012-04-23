@@ -1,3 +1,32 @@
+//------------------------ Tile Loading Count methods -----------------------------------
+/* Have to add the following calls to the layer constructor in the scripts that need to know when to concatenate,
+   and they need to implement a method called concatenateTiles() .
+   
+	.on("load", tileLoaded)
+	.on("added_tile", tileAdded)
+	.on("aborted_tile", tileAborted)
+   */
+
+var tiles_added = 0;
+var tiles_loaded = 0;
+
+function tileAdded (e) {
+	tiles_added++;
+}
+
+function tileAborted (e) {
+	tiles_added--;
+}
+
+function checkTileCount () {
+	if (tiles_added == tiles_loaded) concatenateTiles ();
+}
+
+function tileLoaded () {
+	tiles_loaded++;
+  	checkTileCount ();
+}
+
 //------------------------ Feature combination methods ----------------------------------
 
 // Nice to have this as a common function with an eye to improving it

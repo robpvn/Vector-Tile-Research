@@ -1,8 +1,5 @@
 var po = org.polymaps;
 
-var tiles_added = 0;
-var tiles_loaded = 0;
-
 var map = po.map()
 	.container(document.getElementById("map").appendChild(po.svg("svg")))
 	.center({lat: 63.43, lon: 10.39})
@@ -12,12 +9,13 @@ var map = po.map()
 
 
 var geoJson_layer = (po.geoJson()
-	.url("http://127.0.0.1:8080/trondheim_centre_buildings/{Z}/{X}/{Y}.geojson") //Remember to use the ip adress rather than localhost to avoid XDomain trouble
+	.url("http://127.0.0.1:8080/trondheim_centre_buildings/{Z}/{X}/{Y}.geojson") //Remember to use this address rather than localhost to avoid cross-domain restrictions.
 	.on("load", po.stylist()
 		.title(function(d) { return "Name: " + d.properties.name + " ID: " + d.properties.osm_id; })
 	)
 
 	.on("load", load)
+	.on("load", tileLoaded)
 	.on("added_tile", tileAdded)
 	.on("aborted_tile", tileAborted)
 );
@@ -29,30 +27,13 @@ map.add(po.compass()
 
 var layer_container = document.getElementById("org.polymaps.1").parentNode;  
 
-
-function tileAdded (e) {
-	tiles_added++;
-}
-
-function tileAborted (e) {
-	tiles_added--;
-}
-
-function checkTileCount () {
-	if (tiles_added == tiles_loaded) concatenateTiles ();
-}
-
-
 function load(e) {
 	for (var i = 0; i < e.features.length; i++) {
 		var feature = e.features[i].data, d = feature.properties.osm_id;
-		//console.log (feature.properties.NAME + " NR: " + d);
-		e.features[i].element.setAttribute("class", "building"); //Could probably be done better
+		e.features[i].element.setAttribute("class", "building");
 		e.features[i].element.setAttribute("fill", "blue");
 		e.features[i].element.setAttribute("OSM_id", d);
 	}
-  	tiles_loaded++;
-  	checkTileCount ();
 } 
 
 //TODO: Change this method to make it special.

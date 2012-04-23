@@ -18,6 +18,7 @@ var geoJson_layer = (po.geoJson()
 	)
 
 	.on("load", load)
+	.on("load", tileLoaded)
 	.on("added_tile", tileAdded)
 	.on("aborted_tile", tileAborted)
 );
@@ -29,20 +30,6 @@ map.add(po.compass()
 
 var layer_container = document.getElementById("org.polymaps.1").parentNode;  
 
-
-function tileAdded (e) {
-	tiles_added++;
-}
-
-function tileAborted (e) {
-	tiles_added--;
-}
-
-function checkTileCount () {
-	if (tiles_added == tiles_loaded) concatenateTiles ();
-}
-
-
 function load(e) {
 	for (var i = 0; i < e.features.length; i++) {
 		var feature = e.features[i].data, d = feature.properties.osm_id;
@@ -51,8 +38,6 @@ function load(e) {
 		e.features[i].element.setAttribute("fill", "blue");
 		e.features[i].element.setAttribute("OSM_id", d);
 	}
-  	tiles_loaded++;
-  	checkTileCount ();
 } 
 
 function concatenateTiles () {

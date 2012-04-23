@@ -18,6 +18,7 @@ var geoJson_layer = (po.geoJson()
 	)
 
 	.on("load", load)
+	.on("load", tileLoaded)
 	.on("added_tile", tileAdded)
 	.on("aborted_tile", tileAborted)
 );
@@ -28,20 +29,6 @@ map.add(po.compass()
 	.pan("none"));
 
 var layer_container = document.getElementById("org.polymaps.1").parentNode;  
-
-
-function tileAdded (e) {
-	tiles_added++;
-}
-
-function tileAborted (e) {
-	tiles_added--;
-}
-
-function CheckTileCount () {
-	if (tiles_added == tiles_loaded) concatenateTiles ();
-}
-
 
 function load(e) {
 	for (var i = 0; i < e.features.length; i++) {
@@ -62,8 +49,6 @@ function load(e) {
 				e.features[i].element.setAttribute("edgepointerW", feature.edgepointer[3]);
 		}
 	}
-  	tiles_loaded++;
-  	CheckTileCount ();
 } 
 
 function concatenateTiles () {
