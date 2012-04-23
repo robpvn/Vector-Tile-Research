@@ -3,15 +3,15 @@
 // Nice to have this as a common function with an eye to improving it
 /* To union segments into one tile, you add the tile offset of the "source tile" and substract the tile offset of the "destination tile". 
 You can delete the segment from the source til to avoid mutiple svgs on top of each other. (It shouldn't matter to the polymaps tile cache because it works on the tile level only.) */
-function CombineSegments (dest_tile, source_tile, offsets_dest) {
+function combineSegments (dest_tile, source_tile, offsets_dest) {
 	
 	if (source_tile.getAttribute("d") == "") return; //Nothing to add to the dest_tile.
 
-	dest_tile.setAttribute("d", dest_tile.getAttribute("d") + TranslateCoordinates (source_tile.getAttribute("d"), offsets_dest, FindTileOffset (source_tile.parentNode)));
+	dest_tile.setAttribute("d", dest_tile.getAttribute("d") + translateCoordinates (source_tile.getAttribute("d"), offsets_dest, findTileOffset (source_tile.parentNode)));
 }
 
 //Finds the offset from the origin of each tile
-function FindTileOffset (tile) {
+function findTileOffset (tile) {
 	var offsetText = tile.getAttribute("transform");
 	offsetText = offsetText.substring (10, offsetText.length -1); //translate(904.5,344.5)
 	//console.log (offsetText);
@@ -21,7 +21,7 @@ function FindTileOffset (tile) {
 }
 
 //Translates the local coordinates from the source tile to make them fit in the local system of the dest tile
-function TranslateCoordinates (path, offset_dest, offset_source) {
+function translateCoordinates (path, offset_dest, offset_source) {
 	
 	var paintingInstructions = Raphael.parsePathString(path);
 	var result = "";
@@ -53,7 +53,7 @@ function oc(a) {
 
 //Helper to check if a tile is already visited since the "in visitedTiles methoed doesn't work b/c it's fetched aa a new object everytime)
 //Returns true if it's in the list or null
-function CheckForVisits (tile, visitedTiles) {
+function checkForVisits (tile, visitedTiles) {
 	
 	if (!tile) return true;
 	
@@ -67,7 +67,7 @@ function CheckForVisits (tile, visitedTiles) {
 }
 
 //Returns a tile when given a relative pointer text like "0,1"
-function FindTile (current_tile, tilepointer_text) {
+function findTile (current_tile, tilepointer_text) {
 	var components = tilepointer_text.split(',');
 	var target_x = parseInt (current_tile.getAttribute ("tile_column")) + parseInt (components[0]);
 	var target_y = parseInt (current_tile.getAttribute ("tile_row")) - parseInt (components[1]); //Switcharoo b/c of opposite coordinate system!

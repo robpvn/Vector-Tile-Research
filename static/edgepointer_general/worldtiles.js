@@ -39,7 +39,7 @@ function tileAborted (e) {
 }
 
 function CheckTileCount () {
-	if (tiles_added == tiles_loaded) ConcatenateTiles ();
+	if (tiles_added == tiles_loaded) concatenateTiles ();
 }
 
 
@@ -66,7 +66,7 @@ function load(e) {
   	CheckTileCount ();
 } 
 
-function ConcatenateTiles () {
+function concatenateTiles () {
 	
 	console.log ("Concatenating tiles (in theory)");
 	
@@ -87,7 +87,7 @@ function ConcatenateTiles () {
 	//Preprare the tile for larger features	
 	tile.removeAttribute ("clip-path");
 	
-	offsets_dest = FindTileOffset (tile);
+	offsets_dest = findTileOffset (tile);
 		for (var j = 0; j < tile.children.length; j++) {
 			segment = tile.children[j]
 			//console.log ("fragments");
@@ -112,10 +112,10 @@ function ConcatenateTiles () {
 			//This is where the local magic happens, recursive function
 			
 			var visitedTiles = new Array();
-			tileSegments = FollowPointers (tile, segment, id, tileSegments, visitedTiles);
+			tileSegments = followPointers (tile, segment, id, tileSegments, visitedTiles);
 			
 			for (var m = 1; m <tileSegments.length; m++) {
-				CombineSegments (segment, tileSegments[m], offsets_dest);
+				combineSegments (segment, tileSegments[m], offsets_dest);
 				//tileSegments[m].parentNode.removeChild (tileSegments[m]);
 				
 				//Instead of removing it like we used to we have keep the pointer attributes,
@@ -130,7 +130,7 @@ function ConcatenateTiles () {
 	
 }
 
-function FollowPointers (tile, segment, id, tileSegments, visitedTiles) {
+function followPointers (tile, segment, id, tileSegments, visitedTiles) {
 	
 	visitedTiles.push (tile);
 	
@@ -148,9 +148,9 @@ function FollowPointers (tile, segment, id, tileSegments, visitedTiles) {
 		
 		//console.log ("Pursuing edge pointers, has N neighbour");
 		
-		var nextTile = FindTile (tile, segment.getAttribute("edgepointerN"));
+		var nextTile = findTile (tile, segment.getAttribute("edgepointerN"));
 		
-		FindSegment (nextTile, id, tileSegments, visitedTiles);
+		findSegment (nextTile, id, tileSegments, visitedTiles);
 		
 	}
 	
@@ -158,9 +158,9 @@ function FollowPointers (tile, segment, id, tileSegments, visitedTiles) {
 		
 		//console.log ("Pursuing edge pointers, has E neighbour");
 		
-		var nextTile = FindTile (tile, segment.getAttribute("edgepointerE"));
+		var nextTile = findTile (tile, segment.getAttribute("edgepointerE"));
 		
-		FindSegment (nextTile, id, tileSegments, visitedTiles);
+		findSegment (nextTile, id, tileSegments, visitedTiles);
 		
 	}
 	
@@ -168,9 +168,9 @@ function FollowPointers (tile, segment, id, tileSegments, visitedTiles) {
 		
 		//console.log ("Pursuing edge pointers, has S neighbour");
 		
-		var nextTile = FindTile (tile, segment.getAttribute("edgepointerS"));
+		var nextTile = findTile (tile, segment.getAttribute("edgepointerS"));
 		
-		FindSegment (nextTile, id, tileSegments, visitedTiles);
+		findSegment (nextTile, id, tileSegments, visitedTiles);
 		
 	}
 	
@@ -178,9 +178,9 @@ function FollowPointers (tile, segment, id, tileSegments, visitedTiles) {
 		
 		//console.log ("Pursuing edge pointers, has W neighbour");
 		
-		var nextTile = FindTile (tile, segment.getAttribute("edgepointerW"));
+		var nextTile = findTile (tile, segment.getAttribute("edgepointerW"));
 		
-		FindSegment (nextTile, id, tileSegments, visitedTiles);
+		findSegment (nextTile, id, tileSegments, visitedTiles);
 		
 	}
 	
@@ -192,10 +192,10 @@ function FollowPointers (tile, segment, id, tileSegments, visitedTiles) {
 
 //Helper function to find segments in a referenced tile
 
-function FindSegment (nextTile, id, tileSegments, visitedTiles) {
+function findSegment (nextTile, id, tileSegments, visitedTiles) {
 	//if (nextTile == null) break; //Tile not loaded, skip that bit
 	//IF it's null it wont be in visitedtiles
-	if (!CheckForVisits (nextTile, visitedTiles)) {
+	if (!checkForVisits (nextTile, visitedTiles)) {
 		//Finding the next segment to add
 
 		//console.log ("Searching for id match in the referenced tile");
@@ -208,7 +208,7 @@ function FindSegment (nextTile, id, tileSegments, visitedTiles) {
 				//console.log ("Found id match in the referenced tile");
 				tileSegments.push (nextTile.children[j]);
 				//Searching for pointers outwards
-				FollowPointers (nextTile, nextTile.children[j], id,  tileSegments, visitedTiles)
+				followPointers (nextTile, nextTile.children[j], id,  tileSegments, visitedTiles)
 			}
 		}
 		
