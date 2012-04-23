@@ -1,8 +1,5 @@
 var po = org.polymaps;
 
-var tiles_added = 0;
-var tiles_loaded = 0;
-
 var map = po.map()
 	.container(document.getElementById("map").appendChild(po.svg("svg")))
 	.center({lat: 50, lon: 10})
@@ -33,8 +30,7 @@ var layer_container = document.getElementById("org.polymaps.1").parentNode;
 function load(e) {
 	for (var i = 0; i < e.features.length; i++) {
 		var feature = e.features[i].data, d = feature.properties.UN;
-		//console.log (feature.properties.NAME + " NR: " + d);
-		e.features[i].element.setAttribute("class", "country"); //Could probably be done better
+		e.features[i].element.setAttribute("class", "country");
 		e.features[i].element.setAttribute("fill", "blue");
 		e.features[i].element.setAttribute("UN_code", d);
 	}
@@ -53,17 +49,14 @@ function concatenateTiles () {
 	
 	for (var i = 0; i < tiles.length; i++) {
 	
-	//console.log ("tile");
 	tile = tiles[i];
 	
-	//Preprare the tile for larger features	
+	//Prepare the tile for larger features	
 	tile.removeAttribute ("clip-path");
 	
 	offsets_dest = findTileOffset (tile);
 		for (var j = 0; j < tile.children.length; j++) {
 			segment = tile.children[j]
-			//console.log ("fragments");
-			//console.log (segment.getAttributeNS(null,"UN_code"));
 			
 			//Getting the unique ID
 			id = segment.getAttribute("UN_code");

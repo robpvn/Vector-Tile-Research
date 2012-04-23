@@ -36,7 +36,6 @@ function load(e) {
 	}
 } 
 
-//TODO: Change this method to make it special.
 function concatenateTiles () {
 
 	var tiles = layer_container.lastChild.children;
@@ -50,20 +49,18 @@ function concatenateTiles () {
 	var visitedTiles;
 	
 	for (var i = 0; i < tiles.length; i++) {
-	
-	//console.log ("tile");
+
 	tile = tiles[i];
 	
-	//Preprare the tile for larger features	
+	//Prepare the tile for larger features	
 	tile.removeAttribute ("clip-path");
 	
 	offsets_dest = findTileOffset (tile);
+
 		//For each feature segment
 		for (var j = 0; j < tile.children.length; j++) {
 			segment = tile.children[j]
-			//console.log ("fragments");
-			//console.log (segment.getAttributeNS(null,"UN_code"));
-			
+
 			//Getting the unique ID
 			id = segment.getAttribute("OSM_id");
 			
@@ -71,17 +68,8 @@ function concatenateTiles () {
 
 			tileSegments = [];
 			visitedTiles = [];
+
 			//Look for neighbours
-			
-			/*
-			for (var k = i+1; k < tiles.length; k++) {
-				for (var l = 0; l < tiles[k].children.length; l++) {
-					if (tiles[k].children[l].getAttribute("OSM_id") == id) {
-						tileSegments.push (tiles[k].children[l]);
-					}
-				}
-			}
-			*/
 			
 			tileSegments = findFeatureNeighbours(id, tile, tileSegments, visitedTiles);
 			
@@ -111,7 +99,6 @@ function findFeatureNeighbours(id, tile, tileSegments, visitedTiles) {
 		//If we find a match we add it straightaway
 		segment = tile.children[j]
 		
-		
 		if (segment.getAttribute("OSM_id") == id) { 
 		
 			tileSegments.push (segment)
@@ -120,14 +107,13 @@ function findFeatureNeighbours(id, tile, tileSegments, visitedTiles) {
 			//Get the path
 			var paintingInstructions = Raphael.parsePathString(segment.getAttribute("d"));
 			
-			//var northCrossed, eastCrossed, southCrossed, westCrossed = false;
 			
 			//Check for crossings to the north
 			for (var i = 0; i < paintingInstructions.length; i++) {
 				if (paintingInstructions[i][2] <= 0.1) {
 					var nextTile = findTile (tile, "0,1");
 					tileSegments = findFeatureNeighbours(id, nextTile, tileSegments, visitedTiles);
-					break; //We've foun a reason to cross the border, no need to contunue searching.
+					break; //We've found a reason to cross the border, no need to contunue searching.
 				}
 			}
 			
@@ -157,11 +143,9 @@ function findFeatureNeighbours(id, tile, tileSegments, visitedTiles) {
 					break;
 				}
 			}
-			break; //We've found our segment, breakout of the search loop
+			break; //We've found our segment, break out of the search loop
 		}	
 	}
-	
 	return tileSegments;
-
 }
 

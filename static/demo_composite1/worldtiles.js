@@ -1,8 +1,5 @@
 var po = org.polymaps;
 
-var tiles_added = 0;
-var tiles_loaded = 0;
-
 var map = po.map()
 	.container(document.getElementById("map").appendChild(po.svg("svg")))
 	.center({lat: 63.43, lon: 10.39280891418456})
@@ -29,8 +26,6 @@ map.add(po.image()
 	
 map.add(geoJson_layer);
 
-
-
 map.add(po.compass()
 	.pan("none"));
 
@@ -39,9 +34,7 @@ var layer_container = document.getElementById("org.polymaps.1").parentNode;
 function load(e) {
 	for (var i = 0; i < e.features.length; i++) {
 		var feature = e.features[i].data, d = feature.properties.osm_id;
-		//console.log (feature.properties.NAME + " NR: " + d);
-		e.features[i].element.setAttribute("class", "building"); //Could probably be done better
-		//e.features[i].element.setAttribute("fill", "blue");
+		e.features[i].element.setAttribute("class", "building");
 		e.features[i].element.setAttribute("OSM_id", d);
 		if (feature.edgepointer) {
 			e.features[i].element.setAttribute("edgepointers", "yes");
@@ -61,7 +54,6 @@ function concatenateTiles () {
 	
 	console.log ("Concatenating tiles (in theory)");
 	
-	
 	var tiles = layer_container.lastChild.children;
 	var segment;
 	var offsets;
@@ -72,7 +64,6 @@ function concatenateTiles () {
 	
 	for (var i = 0; i < tiles.length; i++) {
 	
-	//console.log ("tile");
 	tile = tiles[i];
 	
 	//Preprare the tile for larger features	
@@ -81,25 +72,14 @@ function concatenateTiles () {
 	offsets_dest = findTileOffset (tile);
 		for (var j = 0; j < tile.children.length; j++) {
 			segment = tile.children[j]
-			//console.log ("fragments");
-			//console.log (segment.getAttributeNS(null,"UN_code"));
-			
+
 			//Getting the unique ID
 			id = segment.getAttribute("OSM_id");
 			
 			if (id in oc(completedFeatures)) continue;
 
 			tileSegments = [segment];
-			
-			/*for (var k = i+1; k < tiles.length; k++) {
-				for (var l = 0; l < tiles[k].children.length; l++) {
-					if (tiles[k].children[l].getAttribute("UN_code") == id) {
-						tileSegments.push (tiles[k].children[l]);
-					}
-				}
-			}
-			*/
-			
+
 			//This is where the local magic happens, recursive function
 			
 			var visitedTiles = new Array();
@@ -107,18 +87,14 @@ function concatenateTiles () {
 			
 			for (var m = 1; m <tileSegments.length; m++) {
 				combineSegments (segment, tileSegments[m], offsets_dest);
-				//tileSegments[m].parentNode.removeChild (tileSegments[m]);
-				
+
 				//Instead of removing it like we used to we have keep the pointer attributes,
 				// so we remove only the path content
 				tileSegments[m].setAttribute ("d", "");
 			}
-			
-			//segment.setAttribute("fill", "lightblue");
 			completedFeatures.push (id);
 		}
-	}
-	
+	}	
 }
 
 function followPointers (tile, segment, id, tileSegments, visitedTiles) {
@@ -127,124 +103,57 @@ function followPointers (tile, segment, id, tileSegments, visitedTiles) {
 	
 	//Check that the feature is not within a single tile
 	if (segment.getAttribute("edgepointers") != "yes") {
-		//console.log ("No edge pointers exist");
 		return tileSegments;
 	}
-	
-	
-	
-	
-	
+
 	if (segment.getAttribute("edgepointerN") != ",") {
-		
-		//console.log ("Pursuing edge pointers, has N neighbour");
-		
+
 		var nextTile = findTile (tile, segment.getAttribute("edgepointerN"));
 		
 		findSegment (nextTile, id, tileSegments, visitedTiles);
-		
 	}
 	
 	if (segment.getAttribute("edgepointerE") != ",") {
-		
-		//console.log ("Pursuing edge pointers, has E neighbour");
-		
+
 		var nextTile = findTile (tile, segment.getAttribute("edgepointerE"));
 		
 		findSegment (nextTile, id, tileSegments, visitedTiles);
-		
 	}
 	
 	if (segment.getAttribute("edgepointerS") != ",") {
-		
-		//console.log ("Pursuing edge pointers, has S neighbour");
-		
+
 		var nextTile = findTile (tile, segment.getAttribute("edgepointerS"));
 		
 		findSegment (nextTile, id, tileSegments, visitedTiles);
-		
 	}
 	
 	if (segment.getAttribute("edgepointerW") != ",") {
-		
-		//console.log ("Pursuing edge pointers, has W neighbour");
-		
+
 		var nextTile = findTile (tile, segment.getAttribute("edgepointerW"));
 		
 		findSegment (nextTile, id, tileSegments, visitedTiles);
-		
 	}
-	
-	
 	//We've followed it to the end of the trail!
-	return tileSegments;
-	
+	return tileSegments;	
 }
 
 //Helper function to find segments in a referenced tile
 
 function findSegment (nextTile, id, tileSegments, visitedTiles) {
-	//if (nextTile == null) break; //Tile not loaded, skip that bit
-	//IF it's null it wont be in visitedtiles
+	//If it's null it wont be in visitedtiles
 	if (!checkForVisits (nextTile, visitedTiles)) {
 		//Finding the next segment to add
 
-		//console.log ("Searching for id match in the referenced tile");
 		for (var j = 0; j < nextTile.children.length; j++) {
-			
-			
-			
+
 			if (nextTile.children[j].getAttribute("OSM_id") == id ) {
-				
-				//console.log ("Found id match in the referenced tile");
+
 				tileSegments.push (nextTile.children[j]);
 				//Searching for pointers outwards
 				followPointers (nextTile, nextTile.children[j], id,  tileSegments, visitedTiles)
 			}
 		}
-		
-		
-	} else {
-		//console.log ("Neighbour already visited");
-	}
 
-}
-
-//Helper to check if a tile is already visited since the "in visitedTiles methoed doesn't work b/c it's fetched aa a new object everytime)
-//Returns true if it's in the list or null
-function checkForVisits (tile, visitedTiles) {
-	
-	if (!tile) return true;
-	
-	for (var i = 0; i < visitedTiles.length; i++) {
-		if (tile.getAttribute ("tile_row") == visitedTiles[i].getAttribute ("tile_row") 
-		    && tile.getAttribute ("tile_column") == visitedTiles[i].getAttribute ("tile_column"))
-			return true;
 	}
-	
-	return false;
-}
-
-function findTiles (current_tile, tilepointer_text) {
-	var components = tilepointer_text.split(',');
-	var target_x = parseInt (current_tile.getAttribute ("tile_column")) + parseInt (components[0]);
-	var target_y = parseInt (current_tile.getAttribute ("tile_row")) - parseInt (components[1]); //Switcharoo b/c of opposite coordinate system!
-	
-	//Find the tile with that address
-	
-	var tiles = layer_container.lastChild.children;
-	
-	//console.log ("Looking for tile pointed to");
-	
-	for (var i = 0; i < tiles.length; i++) {
-		if (tiles[i].getAttribute ("tile_row") == target_y && tiles[i].getAttribute ("tile_column") == target_x) {
-			//console.log ("Found tile being pointed to");
-			return tiles[i];
-		}
-	}
-	
-	//IF we're here then the aforementioned tile hasn't been loaded. TODO: Here is where you might force the loading
-	
-	return null;
 }
 

@@ -1,8 +1,5 @@
 var po = org.polymaps;
 
-var tiles_added = 0;
-var tiles_loaded = 0;
-
 var map = po.map()
 	.container(document.getElementById("map").appendChild(po.svg("svg")))
 	.center({lat: 63.43, lon: 10.39280891418456})
@@ -33,8 +30,7 @@ var layer_container = document.getElementById("org.polymaps.1").parentNode;
 function load(e) {
 	for (var i = 0; i < e.features.length; i++) {
 		var feature = e.features[i].data, d = feature.properties.osm_id;
-		//console.log (feature.properties.NAME + " NR: " + d);
-		e.features[i].element.setAttribute("class", "building"); //Could probably be done better
+		e.features[i].element.setAttribute("class", "building");
 		e.features[i].element.setAttribute("fill", "blue");
 		e.features[i].element.setAttribute("OSM_id", d);
 		if (feature.edgepointer) {
@@ -55,7 +51,6 @@ function concatenateTiles () {
 	
 	console.log ("Concatenating tiles (in theory)");
 	
-	
 	var tiles = layer_container.lastChild.children;
 	var segment;
 	var offsets;
@@ -66,7 +61,6 @@ function concatenateTiles () {
 	
 	for (var i = 0; i < tiles.length; i++) {
 	
-	//console.log ("tile");
 	tile = tiles[i];
 	
 	//Prepare the tile for larger features	
@@ -75,8 +69,6 @@ function concatenateTiles () {
 	offsets_dest = findTileOffset (tile);
 		for (var j = 0; j < tile.children.length; j++) {
 			segment = tile.children[j]
-			//console.log ("fragments");
-			//console.log (segment.getAttributeNS(null,"UN_code"));
 			
 			//Getting the unique ID
 			id = segment.getAttribute("OSM_id");
@@ -84,16 +76,7 @@ function concatenateTiles () {
 			if (id in oc(completedFeatures)) continue;
 
 			tileSegments = [segment];
-			
-			/*for (var k = i+1; k < tiles.length; k++) {
-				for (var l = 0; l < tiles[k].children.length; l++) {
-					if (tiles[k].children[l].getAttribute("UN_code") == id) {
-						tileSegments.push (tiles[k].children[l]);
-					}
-				}
-			}
-			*/
-			
+
 			//This is where the local magic happens, recursive function
 			
 			var visitedTiles = new Array();
@@ -101,7 +84,6 @@ function concatenateTiles () {
 			
 			for (var m = 1; m <tileSegments.length; m++) {
 				combineSegments (segment, tileSegments[m], offsets_dest);
-				//tileSegments[m].parentNode.removeChild (tileSegments[m]);
 				
 				//Instead of removing it like we used to we have keep the pointer attributes,
 				// so we remove only the path content
@@ -112,7 +94,6 @@ function concatenateTiles () {
 			completedFeatures.push (id);
 		}
 	}
-	
 }
 
 function followPointers (tile, segment, id, tileSegments, visitedTiles) {
@@ -121,17 +102,10 @@ function followPointers (tile, segment, id, tileSegments, visitedTiles) {
 	
 	//Check that the feature is not within a single tile
 	if (segment.getAttribute("edgepointers") != "yes") {
-		//console.log ("No edge pointers exist");
 		return tileSegments;
 	}
-	
-	
-	
-	
-	
+
 	if (segment.getAttribute("edgepointerN") != ",") {
-		
-		//console.log ("Pursuing edge pointers, has N neighbour");
 		
 		var nextTile = findTile (tile, segment.getAttribute("edgepointerN"));
 		
@@ -141,8 +115,6 @@ function followPointers (tile, segment, id, tileSegments, visitedTiles) {
 	
 	if (segment.getAttribute("edgepointerE") != ",") {
 		
-		//console.log ("Pursuing edge pointers, has E neighbour");
-		
 		var nextTile = findTile (tile, segment.getAttribute("edgepointerE"));
 		
 		findSegment (nextTile, id, tileSegments, visitedTiles);
@@ -150,8 +122,6 @@ function followPointers (tile, segment, id, tileSegments, visitedTiles) {
 	}
 	
 	if (segment.getAttribute("edgepointerS") != ",") {
-		
-		//console.log ("Pursuing edge pointers, has S neighbour");
 		
 		var nextTile = findTile (tile, segment.getAttribute("edgepointerS"));
 		
@@ -161,47 +131,33 @@ function followPointers (tile, segment, id, tileSegments, visitedTiles) {
 	
 	if (segment.getAttribute("edgepointerW") != ",") {
 		
-		//console.log ("Pursuing edge pointers, has W neighbour");
-		
 		var nextTile = findTile (tile, segment.getAttribute("edgepointerW"));
 		
 		findSegment (nextTile, id, tileSegments, visitedTiles);
 		
 	}
-	
-	
+
 	//We've followed it to the end of the trail!
 	return tileSegments;
-	
 }
 
-//Helper function to find segments in a referenced tile
+//Helper function to find segments in a referenced tile, needs to be local because it refers to the id
 
 function findSegment (nextTile, id, tileSegments, visitedTiles) {
-	//if (nextTile == null) break; //Tile not loaded, skip that bit
 	//IF it's null it wont be in visitedtiles
 	if (!checkForVisits (nextTile, visitedTiles)) {
 		//Finding the next segment to add
 
-		//console.log ("Searching for id match in the referenced tile");
 		for (var j = 0; j < nextTile.children.length; j++) {
-			
-			
-			
+
 			if (nextTile.children[j].getAttribute("OSM_id") == id ) {
-				
-				//console.log ("Found id match in the referenced tile");
+
 				tileSegments.push (nextTile.children[j]);
 				//Searching for pointers outwards
 				followPointers (nextTile, nextTile.children[j], id,  tileSegments, visitedTiles)
 			}
 		}
 		
-		
-	} else {
-		//console.log ("Neighbour already visited");
 	}
-
 }
-
 

@@ -114,7 +114,7 @@ function findTile (current_tile, tilepointer_text) {
 		}
 	}
 	
-	//IF we're here then the aforementioned tile hasn't been loaded. TODO: Here is where you might force the loading
+	//If we're here then the aforementioned tile hasn't been loaded. TODO: Here is where you might force the loading
 	
 	return null;
 }
