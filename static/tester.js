@@ -26,10 +26,11 @@ function setUpTester(coordBoundary, zoomBoundary, map, test_name) {
 	}
 	
 	
-	iterationsRemaining = iterations;
-	totalIterations = iterations;
-	times = new Array (iterations);
-	times[0] = [0, 0, 0]; //This one gets overwritten by the first concatcompleted
+	// We add an ekstra iteration because the first one is not reliable due to setup costs
+	iterationsRemaining = iterations +1;
+	totalIterations = iterations +1;
+	times = new Array (iterations +1);
+	times[0] = [0, 0, 0]; //This one gets chopped off at the end bc/ setup gives unreliable timing results
 }
 
 //Equivalent to tileLoadingCompleted
@@ -63,13 +64,17 @@ function moveRandomly () {
 function generateFinalReport () {
 	console.log ("Generating report");
 	
+	//Correcting for the first timing not being reliable
+	totalIterations -= 1;
+	times.shift ();
+	
 	//Create report text
 	var n = "%0A"; //newline
 	var output = "Report for " + testName + ", " + totalIterations + " iterations." + n;
+	output += "Format is Iteration No. - Tile Load Time - Tile Concat Time, in milliseconds " + n;
 	
-	for (var i = 0; i< 10000; i++) {
-	
-		output = output + i + " " + i + " " + i + " " + i +n
+	for (var i = 0; i< totalIterations; i++) {
+		output += (i+1) + " " + ( times[i][1] - times[i][0]) + " " + (times[i][2] - times[i][1]) + n;
 	}
 	
 	//Send report text to user
