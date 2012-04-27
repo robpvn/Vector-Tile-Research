@@ -6,8 +6,9 @@ var testMap; //The map controller we zoom around with
 var totalIterations;
 var iterationsRemaining; //The number of iterations we have left of the test round.
 var times;
+var testName;
 
-function setUpTester(coordBoundary, zoomBoundary, map) {
+function setUpTester(coordBoundary, zoomBoundary, map, test_name) {
 	minLat = coordBoundary[0];
 	minLon = coordBoundary[1];
 	maxLat = coordBoundary[2];
@@ -15,7 +16,7 @@ function setUpTester(coordBoundary, zoomBoundary, map) {
 	minZoom = zoomBoundary[0];
 	maxZoom = zoomBoundary[1];
 	testMap = map;
-	
+	testName = test_name;
 	
 	var iterations = new Number (prompt ("Please enter the number of test iterations","3"));
 	
@@ -61,4 +62,18 @@ function moveRandomly () {
 
 function generateFinalReport () {
 	console.log ("Generating report");
+	
+	//Create report text
+	var n = "%0A"; //newline
+	var output = "Report for " + testName + ", " + totalIterations + " iterations." + n;
+	
+	for (var i = 0; i< 10000; i++) {
+	
+		output = output + i + " " + i + " " + i + " " + i +n
+	}
+	
+	//Send report text to user
+	var dataUri = "data:," + output
+	
+	window.location.href = dataUri;
 }
