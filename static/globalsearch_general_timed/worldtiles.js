@@ -87,7 +87,7 @@ function concatenateTiles () {
 		}
 	}
 	
-	tileConcatCompleted ()
+	tileConcatCompleted ();
 	
 }
 
