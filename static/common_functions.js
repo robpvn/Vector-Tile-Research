@@ -36,7 +36,12 @@ function combineSegments (dest_tile, source_tile, offsets_dest) {
 	
 	if (source_tile.getAttribute("d") == "") return; //Nothing to add to the dest_tile.
 
-	dest_tile.setAttribute("d", dest_tile.getAttribute("d") + translateCoordinates (source_tile.getAttribute("d"), offsets_dest, findTileOffset (source_tile.parentNode)));
+	//dest_tile.setAttribute("d", dest_tile.getAttribute("d") + translateCoordinates (source_tile.getAttribute("d"), offsets_dest, findTileOffset (source_tile.parentNode)));
+	
+	offsets_source = findTileOffset (source_tile.parentNode);
+	
+	var translatedPath = translateCoordinates (source_tile.getAttribute("d"), offsets_dest, offsets_source);
+	dest_tile.setAttribute("d", createUnion (dest_tile.getAttribute("d"), translatedPath, offsets_dest, offsets_source));
 }
 
 //Finds the offset from the origin of each tile
@@ -64,6 +69,169 @@ function translateCoordinates (path, offset_dest, offset_source) {
 	}
 
 	return result;
+}
+
+/* Takes in two paths translated to the same reference system, and creates a proper union of them. Note that we make a lot of specific implementation details here, since we know that
+   the paths come from tiles in a google mercator projection*/
+function createUnion (pathA, pathB, offsetsA, offsetsB) {
+	
+	var pathA = Raphael.parsePathString(pathA);
+	var pathB = Raphael.parsePathString(pathB);
+	
+	var edgesA = new Array ();
+	var edgesB = new Array ();
+	var edgeIndicesA = new Array (); //These two should be pushed to in the same order as edges
+	var edgeIndicesB = new Array ();
+	
+	//Find out the relative positions of the tiles
+	var orientation = boundaryLineOrientation (offsetsA, offsetsB);
+	
+	//Identify all coord pairs that lie along the boundary line (These pairs create lines along the boundary)
+	
+	if (orientation == 'a' || orientation == 'b')	{ //Moving along the x-axis
+		
+		for (var i = 0; i < (pathA.length - 1); i++) {
+			if (pathA[i][1] == pathA[i+1][1]) { //Probable (but not guaranteed) border
+				edgesA.push (pathA[i]);
+				edgeIndicesA.push (i);
+				edgesA.push (pathA[i+1]);
+				edgeIndicesA.push (i+1);
+			}
+		}
+		
+		for (var i = 0; i < (pathB.length - 1); i++) {
+			if (pathB[i][1] == pathB[i+1][1]) { //Probable (but not guaranteed) border
+				edgesB.push (pathB[i]);
+				edgeIndicesB.push (i);
+				edgesB.push (pathB[i+1]);
+				edgeIndicesB.push (i+1);
+			}
+		}
+		
+	} else { //moving along the y-axis TODO: Double check these too
+		
+		for (var i = 0; i < (pathA.length -1); i++) {
+			if (pathA[i][2] == pathA[i+1][2]) { //Probable (but not guaranteed) border
+				edgesA.push (pathA[i]);
+				edgeIndicesA.push (i);
+				edgesA.push (pathA[i+1]);
+				edgeIndicesA.push (i+1);
+			}
+		}
+		
+		for (var i = 0; i < (pathB.length - 1); i++) {
+			if (pathB[i][2] == pathB[i+1][2]) { //Probable (but not guaranteed) border
+				edgesB.push (pathB[i]);
+				edgeIndicesB.push (i);
+				edgesB.push (pathB[i+1]);
+				edgeIndicesB.push (i+1);
+			}
+		}
+	}
+	
+	//Start following a path and adding points, when you hit a known boundary point find a matching one from the other path and jump in at that point in the path.
+	var pathPos = 0;
+	var pathFollowed = pathA;
+	var pathFollowedEdges = edgesA;
+	var pathFollowedEdgesIndicies = edgeIndicesA;
+	var pathReserve = pathB;
+	var pathReserveEdges = edgesB;
+	var pathReserveEdgesIndicies = edgeIndicesB;
+	var keepBuilding = true;
+	var unionedPath = "";
+	var temp1, temp2, temp3;
+	var forward = true; //Forward from A's perspective
+	
+	while (keepBuilding) {
+		
+		unionedPath = addPathPoint (unionedPath, pathFollowed[pathPos]);
+		
+		//Check for boundaries
+		if (pathFollowed[pathPos] in oc(pathFollowedEdges)) {
+			//We've hit a boundary, need to change paths - First find the corresponding point on the other edge
+			
+			if (orientation == 'a' || orientation == 'b')	{ //Moving along the x-axis
+				for (var i = 0; i < pathReserveEdges.length; i++) {
+					if (pathReserveEdges[i][2] <= pathFollowed[pathPos] + 0.1 || pathReserveEdges[i][2] >= pathFollowed[pathPos] - 0.1 ) {
+						//We have a match on the other side, switch paths
+						temp1 = pathFollowed;
+						temp2 = pathFollowedEdges;
+						temp3 = pathFollowedEdgesIndicies;
+						
+						pathFollowed = pathReserve;
+						pathFollowedEdges = pathReserveEdges;
+						pathFollowedEdgesIndicies = pathReserveEdgesIndicies;
+						
+						pathReserve = temp1;
+						pathReserveEdges = temp2;
+						pathReserveEdgesIndicies = temp3;
+						
+						pathPos = pathFollowedEdgesIndicies[i];
+						
+						//Make sure you're going in the right direction
+						if (pathFollowed[pathPos][1] == pathFollowed[pathPos + 1][1]) forward = false;
+					}
+				}
+			} else {
+				for (var i = 0; i < pathReserveEdges.length; i++) {
+					if (pathReserveEdges[i][1] <= pathFollowed[pathPos] + 0.1 || pathReserveEdges[i][1] >= pathFollowed[pathPos] - 0.1 ) {
+						//We have a match on the other side, switch paths
+						temp1 = pathFollowed;
+						temp2 = pathFollowedEdges;
+						temp3 = pathFollowedEdgesIndicies;
+						
+						pathFollowed = pathReserve;
+						pathFollowedEdges = pathReserveEdges;
+						pathFollowedEdgesIndicies = pathReserveEdgesIndicies;
+						
+						pathReserve = temp1;
+						pathReserveEdges = temp2;
+						pathReserveEdgesIndicies = temp3;
+						
+						pathPos = pathFollowedEdgesIndicies[i];
+						
+						//Make sure you're going in the right direction
+						if (pathFollowed[pathPos][2] == pathFollowed[pathPos + 1][2]) forward = false;
+					}
+				}
+			}
+			
+		}
+		
+		//When you reach the end of the first path eveything should be traversed (But on the second path we start from the top to make sure we get them all)
+		if (pathFollowed == pathA && pathFollowed[pathPos][0] == "Z") keepBuilding = false;
+		
+		if (forward) pathPos += 1; //Move on, also after a switch bc/ we don't need to add the switch point again
+		else pathPos -= 1;
+		
+		
+	}
+	
+	//Deliver the finished path
+	return unionedPath;
+}
+
+function boundaryLineOrientation (offsetsA, offsetsB){
+	//TODO: Need be sure of what is up and what is down
+	if (offsetsA[0] < offsetsB[0]) { //A is to the left of B
+		return 'l';
+	}
+	else if (offsetsA[0] > offsetsB[0]) { // A is to the right of B
+		return 'r';
+	}
+	else if (offsetsA[1] < offsetsB[1]) { //A is above B
+		return 'a';
+	}
+	else { //A is below B
+		return 'b'
+	}
+	
+}
+
+function addPathPoint (path, newPoint) {
+	if (newPoint[0] != "Z")
+		return path + newPoint[0] + newPoint[1] + newPoint[2];
+	else return path + "Z";
 }
 
 //------------------------ Misc helper methods ----------------------------------
