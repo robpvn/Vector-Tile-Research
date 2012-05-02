@@ -78,6 +78,11 @@ function createUnion (pathA, pathB, offsetsA, offsetsB) {
 	var pathA = Raphael.parsePathString(pathA);
 	var pathB = Raphael.parsePathString(pathB);
 	
+	//TODO: DEBUG ONLY
+	/*
+	pathA = switchXY (pathA);
+	pathB = switchXY (pathB);
+	*/
 	var edgesA = new Array ();
 	var edgesB = new Array ();
 	var edgeIndicesA = new Array (); //These two should be pushed to in the same order as edges
@@ -91,40 +96,40 @@ function createUnion (pathA, pathB, offsetsA, offsetsB) {
 	if (orientation == 'a' || orientation == 'b')	{ //Moving along the x-axis
 		
 		for (var i = 0; i < (pathA.length - 1); i++) {
-			if (pathA[i][1] == pathA[i+1][1]) { //Probable (but not guaranteed) border
-				edgesA.push (pathA[i]);
-				edgeIndicesA.push (i);
-				edgesA.push (pathA[i+1]);
-				edgeIndicesA.push (i+1);
+			if (checkForBoundaryPoint (pathA, i, 2)) { //Probable (but not guaranteed) border
+				if (!(pathA[i] in oc (edgesA))) {
+					edgesA.push (pathA[i]);
+					edgeIndicesA.push (i);
+				}
 			}
 		}
 		
 		for (var i = 0; i < (pathB.length - 1); i++) {
-			if (pathB[i][1] == pathB[i+1][1]) { //Probable (but not guaranteed) border
-				edgesB.push (pathB[i]);
-				edgeIndicesB.push (i);
-				edgesB.push (pathB[i+1]);
-				edgeIndicesB.push (i+1);
+			if (checkForBoundaryPoint (pathB, i, 2)) { //Probable (but not guaranteed) border
+				if (!(pathB[i] in oc (edgesB))) {
+					edgesB.push (pathB[i]);
+					edgeIndicesB.push (i);
+				}
 			}
 		}
 		
 	} else { //moving along the y-axis TODO: Double check these too
 		
 		for (var i = 0; i < (pathA.length -1); i++) {
-			if (pathA[i][2] == pathA[i+1][2]) { //Probable (but not guaranteed) border
-				edgesA.push (pathA[i]);
-				edgeIndicesA.push (i);
-				edgesA.push (pathA[i+1]);
-				edgeIndicesA.push (i+1);
+			if (checkForBoundaryPoint (pathA, i, 1)) { //Probable (but not guaranteed) border
+				if (!(pathA[i] in oc (edgesA))) {
+					edgesA.push (pathA[i]);
+					edgeIndicesA.push (i);
+				}
 			}
 		}
 		
 		for (var i = 0; i < (pathB.length - 1); i++) {
-			if (pathB[i][2] == pathB[i+1][2]) { //Probable (but not guaranteed) border
-				edgesB.push (pathB[i]);
-				edgeIndicesB.push (i);
-				edgesB.push (pathB[i+1]);
-				edgeIndicesB.push (i+1);
+			if (checkForBoundaryPoint (pathB, i, 1)) { //Probable (but not guaranteed) border
+				if (!(pathB[i] in oc (edgesB))) {
+					edgesB.push (pathB[i]);
+					edgeIndicesB.push (i);
+				}
 			}
 		}
 	}
@@ -169,7 +174,8 @@ function createUnion (pathA, pathB, offsetsA, offsetsB) {
 						pathPos = pathFollowedEdgesIndicies[i];
 						
 						//Make sure you're going in the right direction
-						if (pathFollowed[pathPos][1] == pathFollowed[pathPos + 1][1]) forward = false;
+						if (forward && pathFollowed[pathPos][1] == pathFollowed[pathPos + 1][1]) forward = false;
+						else if (!forward && pathFollowed[pathPos][1] == pathFollowed[pathPos - 1][1]) forward = true;
 					}
 				}
 			} else {
@@ -191,7 +197,8 @@ function createUnion (pathA, pathB, offsetsA, offsetsB) {
 						pathPos = pathFollowedEdgesIndicies[i];
 						
 						//Make sure you're going in the right direction
-						if (pathFollowed[pathPos][2] == pathFollowed[pathPos + 1][2]) forward = false;
+						if (forward && pathFollowed[pathPos][2] == pathFollowed[pathPos + 1][2]) forward = false;
+						else if (!forward && pathFollowed[pathPos][2] == pathFollowed[pathPos - 1][2]) forward = true;
 					}
 				}
 			}
@@ -209,6 +216,23 @@ function createUnion (pathA, pathB, offsetsA, offsetsB) {
 	
 	//Deliver the finished path
 	return unionedPath;
+}
+//Axis is 1 or 2, aka. the index of the point
+function checkForBoundaryPoint (pointArray, pointIndex, axis) {
+	if (pointIndex == 0) { //Check if we're at the start
+		if (pointArray[pointArray.length -2][axis] == pointArray[pointIndex][axis]
+		    || pointArray[pointIndex][axis] == pointArray[pointIndex+1][axis])
+			return true;
+	} else if (pointArray.length -2 == pointIndex) { //Check if we're on the end
+		if (pointArray[0][axis] == pointArray[pointIndex][axis]
+		    || pointArray[pointIndex][axis] == pointArray[pointIndex-1][axis])
+			return true;
+	} else if (pointArray[pointIndex][axis] == pointArray[pointIndex+1][axis]
+	    || pointArray[pointIndex][axis] == pointArray[pointIndex-1][axis]) { //general case
+		return true;
+	}
+	
+	return false;
 }
 
 function boundaryLineOrientation (offsetsA, offsetsB){
@@ -230,8 +254,22 @@ function boundaryLineOrientation (offsetsA, offsetsB){
 
 function addPathPoint (path, newPoint) {
 	if (newPoint[0] != "Z")
-		return path + newPoint[0] + newPoint[1] + newPoint[2];
+		return path + newPoint[0] + newPoint[1] + "," + newPoint[2];
 	else return path + "Z";
+}
+
+//TODO: Only for debug purposes
+function switchXY (pathArray) {
+	
+	var temp;
+	
+	for (var i = 0; i < pathArray.length; i++) {
+		temp = pathArray[i][1];
+		pathArray[i][1] = pathArray[i][2];
+		pathArray[i][2] = temp;
+	}
+	
+	return pathArray;
 }
 
 //------------------------ Misc helper methods ----------------------------------
