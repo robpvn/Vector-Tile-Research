@@ -206,7 +206,7 @@ function createUnion (pathA, pathB, offsetsA, offsetsB) {
 		}
 		
 		//When you reach the end of the first path eveything should be traversed (But on the second path we start from the top to make sure we get them all)
-		if (pathFollowed == pathA && pathFollowed[pathPos][0] == "Z") keepBuilding = false;
+		if (pathFollowed == pathA && pathFollowed[pathPos][0] == "Z" && pathPos == (pathA.length -1)) keepBuilding = false;
 		
 		if (forward) pathPos += 1; //Move on, also after a switch bc/ we don't need to add the switch point again
 		else pathPos -= 1;
