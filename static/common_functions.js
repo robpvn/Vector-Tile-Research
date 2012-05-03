@@ -88,21 +88,40 @@ function createUnion (pathA, pathB, offsetsA, offsetsB) {
 	var subPathsB = createSubPaths (pathB);
 	
 	//Decide which paths have boundary points
+	var axisIndex;
+	if (orientation == 'a' || orientation == 'b') axisIndex = 2;
+	else axisIndex = 1;
 	
-	//Every non-boundary subpath goes straight into the unioned path
-	//TODO: Actually cut the right paths TMEPMEMP
-	var unionedPath = "";
+	var noBoundarySubPaths = new Array (); //No probable boundary crossings
+	var boundary;
 	for (var i = 0; i < subPathsA.length; i++) {
-		for (var j = 0; j < subPathsA[i].length; j++) {
-			unionedPath = addPathPoint (unionedPath, subPathsA[i][j]);
+		boundary = false;
+		for (var j = 0; j < subPathsA[i].length -1; j++) {
+			if (checkForBoundaryPoint (subPathsA[i], j, axisIndex)) {
+				boundary = true;	//TODO: Devise something else to do for boundaries
+			}
 		}
+		if (!boundary) noBoundarySubPaths.push (subPathsA[i]);
 	}
 	
 	for (var i = 0; i < subPathsB.length; i++) {
-		for (var j = 0; j < subPathsB[i].length; j++) {
-			unionedPath = addPathPoint (unionedPath, subPathsB[i][j]);
+		boundary = false;
+		for (var j = 0; j < subPathsB[i].length -1; j++) {
+			if (checkForBoundaryPoint (subPathsB[i], j, axisIndex)) {
+				boundary = true;	//TODO: Devise something else to do for boundaries
+			}
+		}
+		if (!boundary) noBoundarySubPaths.push (subPathsB[i]);
+	}
+	
+	//Every non-boundary subpath goes straight into the unioned path
+	var unionedPath = "";
+	for (var i = 0; i < noBoundarySubPaths.length; i++) {
+		for (var j = 0; j < noBoundarySubPaths[i].length; j++) {
+			unionedPath = addPathPoint (unionedPath, noBoundarySubPaths[i][j]);
 		}
 	}
+
 	//Deliver the finished path
 	return unionedPath;
 }
