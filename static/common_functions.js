@@ -75,148 +75,55 @@ function translateCoordinates (path, offset_dest, offset_source) {
    the paths come from tiles in a google mercator projection*/
 function createUnion (pathA, pathB, offsetsA, offsetsB) {
 	
-	var pathA = Raphael.parsePathString(pathA);
-	var pathB = Raphael.parsePathString(pathB);
-	
-	//TODO: DEBUG ONLY
-	/*
-	pathA = switchXY (pathA);
-	pathB = switchXY (pathB);
-	*/
-	var edgesA = new Array ();
-	var edgesB = new Array ();
-	var edgeIndicesA = new Array (); //These two should be pushed to in the same order as edges
-	var edgeIndicesB = new Array ();
+	if (pathA == "") return pathB; //We add the new elements
 	
 	//Find out the relative positions of the tiles
 	var orientation = boundaryLineOrientation (offsetsA, offsetsB);
 	
-	//Identify all coord pairs that lie along the boundary line (These pairs create lines along the boundary)
+	var pathA = Raphael.parsePathString(pathA);
+	var pathB = Raphael.parsePathString(pathB);
 	
-	if (orientation == 'a' || orientation == 'b')	{ //Moving along the x-axis
-		
-		for (var i = 0; i < (pathA.length - 1); i++) {
-			if (checkForBoundaryPoint (pathA, i, 2)) { //Probable (but not guaranteed) border
-				if (!(pathA[i] in oc (edgesA))) {
-					edgesA.push (pathA[i]);
-					edgeIndicesA.push (i);
-				}
-			}
-		}
-		
-		for (var i = 0; i < (pathB.length - 1); i++) {
-			if (checkForBoundaryPoint (pathB, i, 2)) { //Probable (but not guaranteed) border
-				if (!(pathB[i] in oc (edgesB))) {
-					edgesB.push (pathB[i]);
-					edgeIndicesB.push (i);
-				}
-			}
-		}
-		
-	} else { //moving along the y-axis TODO: Double check these too
-		
-		for (var i = 0; i < (pathA.length -1); i++) {
-			if (checkForBoundaryPoint (pathA, i, 1)) { //Probable (but not guaranteed) border
-				if (!(pathA[i] in oc (edgesA))) {
-					edgesA.push (pathA[i]);
-					edgeIndicesA.push (i);
-				}
-			}
-		}
-		
-		for (var i = 0; i < (pathB.length - 1); i++) {
-			if (checkForBoundaryPoint (pathB, i, 1)) { //Probable (but not guaranteed) border
-				if (!(pathB[i] in oc (edgesB))) {
-					edgesB.push (pathB[i]);
-					edgeIndicesB.push (i);
-				}
-			}
-		}
-	}
+	//Section the path into subpaths
+	var subPathsA = createSubPaths (pathA);
+	var subPathsB = createSubPaths (pathB);
 	
-	//Start following a path and adding points, when you hit a known boundary point find a matching one from the other path and jump in at that point in the path.
-	var pathPos = 0;
-	var pathFollowed = pathA;
-	var pathFollowedEdges = edgesA;
-	var pathFollowedEdgesIndicies = edgeIndicesA;
-	var pathReserve = pathB;
-	var pathReserveEdges = edgesB;
-	var pathReserveEdgesIndicies = edgeIndicesB;
-	var keepBuilding = true;
+	//Decide which paths have boundary points
+	
+	//Every non-boundary subpath goes straight into the unioned path
+	//TODO: Actually cut the right paths TMEPMEMP
 	var unionedPath = "";
-	var temp1, temp2, temp3;
-	var forward = true; //Forward from A's perspective
-	
-	while (keepBuilding) {
-		
-		unionedPath = addPathPoint (unionedPath, pathFollowed[pathPos]);
-		
-		//Check for boundaries
-		if (pathFollowed[pathPos] in oc(pathFollowedEdges)) {
-			//We've hit a boundary, need to change paths - First find the corresponding point on the other edge
-			
-			if (orientation == 'a' || orientation == 'b')	{ //Moving along the x-axis
-				for (var i = 0; i < pathReserveEdges.length; i++) {
-					if (pathReserveEdges[i][2] <= pathFollowed[pathPos] + 0.1 || pathReserveEdges[i][2] >= pathFollowed[pathPos] - 0.1 ) {
-						//We have a match on the other side, switch paths
-						temp1 = pathFollowed;
-						temp2 = pathFollowedEdges;
-						temp3 = pathFollowedEdgesIndicies;
-						
-						pathFollowed = pathReserve;
-						pathFollowedEdges = pathReserveEdges;
-						pathFollowedEdgesIndicies = pathReserveEdgesIndicies;
-						
-						pathReserve = temp1;
-						pathReserveEdges = temp2;
-						pathReserveEdgesIndicies = temp3;
-						
-						pathPos = pathFollowedEdgesIndicies[i];
-						
-						//Make sure you're going in the right direction
-						if (forward && pathFollowed[pathPos][1] == pathFollowed[pathPos + 1][1]) forward = false;
-						else if (!forward && pathFollowed[pathPos][1] == pathFollowed[pathPos - 1][1]) forward = true;
-					}
-				}
-			} else {
-				for (var i = 0; i < pathReserveEdges.length; i++) {
-					if (pathReserveEdges[i][1] <= pathFollowed[pathPos] + 0.1 || pathReserveEdges[i][1] >= pathFollowed[pathPos] - 0.1 ) {
-						//We have a match on the other side, switch paths
-						temp1 = pathFollowed;
-						temp2 = pathFollowedEdges;
-						temp3 = pathFollowedEdgesIndicies;
-						
-						pathFollowed = pathReserve;
-						pathFollowedEdges = pathReserveEdges;
-						pathFollowedEdgesIndicies = pathReserveEdgesIndicies;
-						
-						pathReserve = temp1;
-						pathReserveEdges = temp2;
-						pathReserveEdgesIndicies = temp3;
-						
-						pathPos = pathFollowedEdgesIndicies[i];
-						
-						//Make sure you're going in the right direction
-						if (forward && pathFollowed[pathPos][2] == pathFollowed[pathPos + 1][2]) forward = false;
-						else if (!forward && pathFollowed[pathPos][2] == pathFollowed[pathPos - 1][2]) forward = true;
-					}
-				}
-			}
-			
+	for (var i = 0; i < subPathsA.length; i++) {
+		for (var j = 0; j < subPathsA[i].length; j++) {
+			unionedPath = addPathPoint (unionedPath, subPathsA[i][j]);
 		}
-		
-		//When you reach the end of the first path eveything should be traversed (But on the second path we start from the top to make sure we get them all)
-		if (pathFollowed == pathA && pathFollowed[pathPos][0] == "Z" && pathPos == (pathA.length -1)) keepBuilding = false;
-		
-		if (forward) pathPos += 1; //Move on, also after a switch bc/ we don't need to add the switch point again
-		else pathPos -= 1;
-		
-		
 	}
 	
+	for (var i = 0; i < subPathsB.length; i++) {
+		for (var j = 0; j < subPathsB[i].length; j++) {
+			unionedPath = addPathPoint (unionedPath, subPathsB[i][j]);
+		}
+	}
 	//Deliver the finished path
 	return unionedPath;
 }
+
+function createSubPaths (path) {
+	
+	var subPaths = new Array ();
+	var currentSubPath = new Array ();
+	
+	for (var i = 0; i < path.length; i++) {
+	
+		currentSubPath.push (path[i]);
+		
+		if (path[i][0] == "Z") {
+			subPaths.push (currentSubPath);
+			currentSubPath = new Array ();
+		}
+	}
+	return subPaths;
+}
+
 //Axis is 1 or 2, aka. the index of the point
 function checkForBoundaryPoint (pointArray, pointIndex, axis) {
 	if (pointIndex == 0) { //Check if we're at the start
