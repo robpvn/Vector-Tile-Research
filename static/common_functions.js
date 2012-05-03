@@ -91,29 +91,32 @@ function createUnion (pathA, pathB, offsetsA, offsetsB) {
 	var axisIndex;
 	if (orientation == 'a' || orientation == 'b') axisIndex = 2;
 	else axisIndex = 1;
-	
+
+	var boundarySubPaths = new Array ();
 	var noBoundarySubPaths = new Array (); //No probable boundary crossings
 	var boundary;
 	for (var i = 0; i < subPathsA.length; i++) {
 		boundary = false;
 		for (var j = 0; j < subPathsA[i].length -1; j++) {
 			if (checkForBoundaryPoint (subPathsA[i], j, axisIndex)) {
-				boundary = true;	//TODO: Devise something else to do for boundaries
+				boundary = true; //TODO: Devise something else to do for boundaries
 			}
 		}
 		if (!boundary) noBoundarySubPaths.push (subPathsA[i]);
+		else boundarySubPaths.push (subPathsA[i]);
 	}
-	
+
 	for (var i = 0; i < subPathsB.length; i++) {
 		boundary = false;
 		for (var j = 0; j < subPathsB[i].length -1; j++) {
 			if (checkForBoundaryPoint (subPathsB[i], j, axisIndex)) {
-				boundary = true;	//TODO: Devise something else to do for boundaries
+				boundary = true; //TODO: Devise something else to do for boundaries
 			}
 		}
 		if (!boundary) noBoundarySubPaths.push (subPathsB[i]);
+		else boundarySubPaths.push (subPathsB[i]);
 	}
-	
+
 	//Every non-boundary subpath goes straight into the unioned path
 	var unionedPath = "";
 	for (var i = 0; i < noBoundarySubPaths.length; i++) {
@@ -121,9 +124,63 @@ function createUnion (pathA, pathB, offsetsA, offsetsB) {
 			unionedPath = addPathPoint (unionedPath, noBoundarySubPaths[i][j]);
 		}
 	}
-
+	
+	// ---- Work on the boundary elements
+	if (boundarySubPaths.length > 0) {
+		// Convert to Polygon elements
+		for (var i = 0; i < boundarySubPaths.length; i++) {
+			boundarySubPaths[i] = convertToPoly (boundarySubPaths[i]);
+		}
+	
+		//Create the union with external code
+		for (var i = 1; i < boundarySubPaths.length; i++) {
+			boundarySubPaths[0].merge (boundarySubPaths[i]);
+		}
+		//Convert back to paths
+		unionedPath += convertToPath (boundarySubPaths[0]);
+	}
+	
 	//Deliver the finished path
 	return unionedPath;
+}
+
+function convertToPoly (path) {
+	
+	//Create points
+	var points = new Array ();
+	for (var i = 0; i < path.length; i++) {		
+		if (!(path[i][0] == "Z")) {
+			points.push (new Point (path[i][1], path[i][2]));
+		}
+	} 
+	
+	//Create Contour
+	var contour = new Contour (points);
+	//Create poly
+	return new Polygon (points);
+}
+
+function convertToPath (polygon) {
+	
+	var path = "";
+	var contour;
+	
+	//For each contour; equivalent to a closed path?
+	for (var i = 0; i < (polygon.contours.length); i++) {
+		contour = polygon.contours[i];
+		//For each point; equivalent to a brush movement instruction
+		if (contour.pts.length == 0) continue;
+		//Start instruction
+		path += "M" + contour.pts[0].x + "," + contour.pts[0].y;
+		//Movement instructions
+		for (var j = 0; j < (contour.pts.length - 1); j++) {
+			path += "L" + contour.pts[j].x + "," + contour.pts[j].y;
+		}
+		//End instruction
+		path += "Z";
+	}
+	
+	return path;
 }
 
 function createSubPaths (path) {
