@@ -98,8 +98,9 @@ function createUnion (pathA, pathB, offsetsA, offsetsB) {
 	for (var i = 0; i < subPathsA.length; i++) {
 		boundary = false;
 		for (var j = 0; j < subPathsA[i].length -1; j++) {
-			if (checkForBoundaryPoint (subPathsA[i], j, axisIndex)) {
+			if (checkForBoundaryPoint (subPathsA[i], j, axisIndex, orientation)) {
 				boundary = true; //TODO: Devise something else to do for boundaries
+				break;
 			}
 		}
 		if (!boundary) noBoundarySubPaths.push (subPathsA[i]);
@@ -109,8 +110,9 @@ function createUnion (pathA, pathB, offsetsA, offsetsB) {
 	for (var i = 0; i < subPathsB.length; i++) {
 		boundary = false;
 		for (var j = 0; j < subPathsB[i].length -1; j++) {
-			if (checkForBoundaryPoint (subPathsB[i], j, axisIndex)) {
+			if (checkForBoundaryPoint (subPathsB[i], j, axisIndex, orientation)) {
 				boundary = true; //TODO: Devise something else to do for boundaries
+				break;
 			}
 		}
 		if (!boundary) noBoundarySubPaths.push (subPathsB[i]);
@@ -201,7 +203,8 @@ function createSubPaths (path) {
 }
 
 //Axis is 1 or 2, aka. the index of the point
-function checkForBoundaryPoint (pointArray, pointIndex, axis) {
+function checkForBoundaryPoint (pointArray, pointIndex, axis, orientation) {
+	/*
 	if (pointIndex == 0) { //Check if we're at the start
 		if (pointArray[pointArray.length -2][axis] == pointArray[pointIndex][axis]
 		    || pointArray[pointIndex][axis] == pointArray[pointIndex+1][axis])
@@ -216,6 +219,17 @@ function checkForBoundaryPoint (pointArray, pointIndex, axis) {
 	}
 	
 	return false;
+	
+	*/
+	
+	if ((Math.round (pointArray[pointIndex][axis]) % 256 ) == 0 ) { 
+		//Modulo 256 0 0 means it's an edge, mudolo 2 = 0 means it's on the left edge
+		if (orientation == "l" && (Math.round (pointArray[pointIndex][axis]) % 2) == 0) return true;
+		if (orientation == "r" && (Math.round (pointArray[pointIndex][axis]) % 2) != 0) return true;
+		if (orientation == "a" && (Math.round (pointArray[pointIndex][axis]) % 2) == 0) return true;
+		if (orientation == "b" && (Math.round (pointArray[pointIndex][axis]) % 2) != 0) return true;
+	}
+	else return false;
 }
 
 function boundaryLineOrientation (offsetsA, offsetsB){
