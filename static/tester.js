@@ -8,6 +8,8 @@ var iterationsRemaining; //The number of iterations we have left of the test rou
 var times;
 var testName;
 
+var startTime;
+
 function setUpTester(coordBoundary, zoomBoundary, map, test_name) {
 	minLat = coordBoundary[0];
 	minLon = coordBoundary[1];
@@ -25,6 +27,7 @@ function setUpTester(coordBoundary, zoomBoundary, map, test_name) {
 		return;
 	}
 	
+	startTime = (new Date()).getTime();
 	
 	// We add an ekstra iteration because the first one is not reliable due to setup costs
 	iterationsRemaining = iterations +1;
@@ -64,6 +67,8 @@ function moveRandomly () {
 function generateFinalReport () {
 	console.log ("Generating report");
 	
+	var totalTime = (new Date()).getTime() - startTime;
+	
 	//Correcting for the first timing not being reliable
 	totalIterations -= 1;
 	times.shift ();
@@ -71,6 +76,7 @@ function generateFinalReport () {
 	//Create report text
 	var n = "%0A"; //newline
 	var output = "Report for " + testName + ", " + totalIterations + " iterations." + n;
+	output += "Total time used testing is: " + totalTime + " ms = " + (totalTime/1000) + " s" + n;
 	output += "Format is Iteration No. - Tile Load Time - Tile Concat Time, in milliseconds " + n;
 	
 	for (var i = 0; i< totalIterations; i++) {
