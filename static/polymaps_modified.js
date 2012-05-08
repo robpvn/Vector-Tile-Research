@@ -722,7 +722,7 @@ po.map.coordinateLocation = function(c) {
 var bug44083 = /WebKit/.test(navigator.userAgent) ? -1 : 0;
 po.layer = function(load, unload) {
   var layer = {},
-      cache = layer.cache = po.cache(load, unload).size(64),
+      cache = layer.cache = po.cache(load, unload).size(512),
       tile = true,
       visible = true,
       zoom,
