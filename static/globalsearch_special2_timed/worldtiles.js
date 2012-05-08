@@ -8,7 +8,7 @@ var map = po.map()
 	.add(po.interact());
 
 //Setup for timing
-setUpTester([63.425, 10.3759, 63.4378, 10.4075], [15, 20], map, "Global Search, Special data set, Special algorithm");
+setUpTester([63.428, 10.3762, 63.4375, 10.4073], [15, 20], map, "Global Search, Special data set, Special algorithm");
 
 var geoJson_layer = (po.geoJson()
 	.url("http://127.0.0.1:8080/trondheim_centre_buildings/{Z}/{X}/{Y}.geojson") //Remember to use this address rather than localhost to avoid cross-domain restrictions.
