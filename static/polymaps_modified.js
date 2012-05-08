@@ -722,7 +722,7 @@ po.map.coordinateLocation = function(c) {
 var bug44083 = /WebKit/.test(navigator.userAgent) ? -1 : 0;
 po.layer = function(load, unload) {
   var layer = {},
-      cache = layer.cache = po.cache(load, unload).size(512),
+      cache = layer.cache = po.cache(load, unload).size(64),
       tile = true,
       visible = true,
       zoom,
@@ -1370,6 +1370,9 @@ po.geoJson = function(fetch) {
         }
       }
 
+      g.setAttribute("tile_row", tile.row) //RPVN
+      g.setAttribute("tile_column", tile.column) //RPVN
+
       tile.ready = true;
       updated.push.apply(tile.features, updated);
       geoJson.dispatch({type: "load", tile: tile, features: updated});
@@ -1385,8 +1388,9 @@ po.geoJson = function(fetch) {
   function unload(tile) {
     //if (tile.request) tile.request.abort(true);
     if (tile.request) { //RPVN
-    	tile.request.abort(true); //RPVN
-    	geoJson.dispatch({type: "aborted_tile"}); //RPVN
+    	if (!tile.request.abort(true)) { //RPVN
+    	    geoJson.dispatch({type: "aborted_tile"}); //RPVN
+    	}
     } //RPVN
   }
 
