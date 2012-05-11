@@ -10,6 +10,8 @@ var testName;
 
 var startTime;
 
+var currentTimeOutID;
+
 function setUpTester(coordBoundary, zoomBoundary, map, test_name) {
 	minLat = coordBoundary[0];
 	minLon = coordBoundary[1];
@@ -34,6 +36,7 @@ function setUpTester(coordBoundary, zoomBoundary, map, test_name) {
 	totalIterations = iterations +1;
 	times = new Array (iterations +1);
 	times[0] = [0, 0, 0]; //This one gets chopped off at the end bc/ setup gives unreliable timing results
+	currentTimeOutID = window.setTimeout(moveRandomly, 45000); //In case the movement hangs for unknown reasons, we will restart it.
 }
 
 //Equivalent to tileLoadingCompleted
@@ -45,13 +48,17 @@ function tileConcatCompleted () {
 	//Add the timing data
 	times[totalIterations - iterationsRemaining][2] = (new Date()).getTime();
 	
+	window.clearTimeout (currentTimeOutID); //Concat achieved, clear the timeout timer
+	
 	//Check if we continue
 	if (iterationsRemaining == 0) {
 		generateFinalReport ();
 	} else {
 		iterationsRemaining -= 1;
-		moveRandomly ();
-		times[totalIterations - iterationsRemaining] = [(new Date()).getTime(), 0, 0];
+		//moveRandomly ();
+		window.setTimeout(moveRandomly, 1000);
+		currentTimeOutID = window.setTimeout(moveRandomly, 45000); //In case the movement hangs for unknown reasons, we will restart it.
+
 	}
 }
 
@@ -62,6 +69,8 @@ function moveRandomly () {
 	
 	testMap.center({lat: targetLat, lon: targetLon});
 	testMap.zoom(targetZoom);
+	
+	times[totalIterations - iterationsRemaining] = [(new Date()).getTime(), 0, 0]; //Start registering time for the movement
 }
 
 function generateFinalReport () {

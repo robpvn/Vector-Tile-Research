@@ -8,7 +8,7 @@ var map = po.map()
 	.add(po.interact());
 
 //Setup for timing
-setUpTester([-85.0, -180.0, 85.0, 180.0], [2, 7], map, "Edge Pointer, General data set");
+setUpTester([-80.0, -90.0, 80.0, 90.0], [4, 7], map, "Edge Pointer, General data set");
 
 var geoJson_layer = (po.geoJson()
 	.url("http://127.0.0.1:8080/edgepointer_test/{Z}/{X}/{Y}.geojson") //Remember to use the ip adress rather than localhost to avoid XDomain trouble
