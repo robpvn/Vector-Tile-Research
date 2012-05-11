@@ -4,11 +4,11 @@ var map = po.map()
 	.container(document.getElementById("map").appendChild(po.svg("svg")))
 	.center({lat: 63.43, lon: 10.39})
 	.zoomRange([10, 20])
-	.zoom(16)
+	.zoom(17)
 	.add(po.interact());
 
 //Setup for timing
-setUpTester([63.428, 10.3762, 63.4375, 10.4073], [15, 20], map, "Global Search, Special data set, General Algorithm");
+setUpTester([63.429, 10.377, 63.4372, 10.407], [17, 20], map, "Global Search, Special data set, General Algorithm");
 
 var geoJson_layer = (po.geoJson()
 	.url("http://127.0.0.1:8080/trondheim_centre_buildings/{Z}/{X}/{Y}.geojson") //Remember to use the ip adress rather than localhost to avoid XDomain trouble

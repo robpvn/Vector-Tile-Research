@@ -36,7 +36,7 @@ function setUpTester(coordBoundary, zoomBoundary, map, test_name) {
 	totalIterations = iterations +1;
 	times = new Array (iterations +1);
 	times[0] = [0, 0, 0]; //This one gets chopped off at the end bc/ setup gives unreliable timing results
-	currentTimeOutID = window.setTimeout(moveRandomly, 100000); //In case the movement hangs for unknown reasons, we will restart it.
+	currentTimeOutID = window.setTimeout(moveRandomly, 45000); //In case the movement hangs for unknown reasons, we will restart it.
 }
 
 //Equivalent to tileLoadingCompleted
@@ -55,8 +55,9 @@ function tileConcatCompleted () {
 		generateFinalReport ();
 	} else {
 		iterationsRemaining -= 1;
-		moveRandomly ();
-		currentTimeOutID = window.setTimeout(moveRandomly, 100000); //In case the movement hangs for unknown reasons, we will restart it.
+		//moveRandomly ();
+		window.setTimeout(moveRandomly, 1000);
+		currentTimeOutID = window.setTimeout(moveRandomly, 45000); //In case the movement hangs for unknown reasons, we will restart it.
 
 	}
 }
