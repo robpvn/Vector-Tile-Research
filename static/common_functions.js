@@ -5,6 +5,8 @@
 	.on("load", tileLoaded)
 	.on("added_tile", tileAdded)
 	.on("aborted_tile", tileAborted)
+	
+  The counting mechanism should work no matter how many layers you have.
    */
 
 var tiles_added = 0;
@@ -96,14 +98,12 @@ function checkForVisits (tile, visitedTiles) {
 }
 
 //Returns a tile when given a relative pointer text like "0,1"
-function findTile (current_tile, tilepointer_text) {
+function findTile (current_tile, tilepointer_text, tiles) {
 	var components = tilepointer_text.split(',');
 	var target_x = parseInt (current_tile.getAttribute ("tile_column")) + parseInt (components[0]);
 	var target_y = parseInt (current_tile.getAttribute ("tile_row")) - parseInt (components[1]); //Switcharoo b/c of opposite coordinate system!
 	
 	//Find the tile with that address
-	
-	var tiles = layer_container.lastChild.children;
 	
 	//console.log ("Looking for tile pointed to");
 	
