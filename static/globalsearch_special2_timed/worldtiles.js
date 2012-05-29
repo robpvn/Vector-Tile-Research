@@ -75,7 +75,7 @@ function concatenateTiles () {
 
 			//Look for neighbours
 			
-			tileSegments = findFeatureNeighbours(id, tile, tileSegments, visitedTiles);
+			tileSegments = findFeatureNeighbours(id, tile, tileSegments, visitedTiles, tiles);
 			
 			//Combine segments
 			
@@ -93,7 +93,7 @@ function concatenateTiles () {
 
 }
 
-function findFeatureNeighbours(id, tile, tileSegments, visitedTiles) {
+function findFeatureNeighbours(id, tile, tileSegments, visitedTiles, tiles) {
 	
 	if (checkForVisits (tile, visitedTiles)) {
 		return tileSegments;
@@ -118,8 +118,8 @@ function findFeatureNeighbours(id, tile, tileSegments, visitedTiles) {
 			//Check for crossings to the north
 			for (var i = 0; i < paintingInstructions.length; i++) {
 				if (paintingInstructions[i][2] <= 0.1) {
-					var nextTile = findTile (tile, "0,1");
-					tileSegments = findFeatureNeighbours(id, nextTile, tileSegments, visitedTiles);
+					var nextTile = findTile (tile, "0,1", tiles);
+					tileSegments = findFeatureNeighbours(id, nextTile, tileSegments, visitedTiles, tiles);
 					break; //We've found a reason to cross the border, no need to contunue searching.
 				}
 			}
@@ -127,8 +127,8 @@ function findFeatureNeighbours(id, tile, tileSegments, visitedTiles) {
 			//Check for crossings to the east
 			for (var i = 0; i < paintingInstructions.length; i++) {
 				if (paintingInstructions[i][1] >= 255.9) {
-					var nextTile = findTile (tile, "1,0");
-					tileSegments = findFeatureNeighbours(id, nextTile, tileSegments, visitedTiles);
+					var nextTile = findTile (tile, "1,0", tiles);
+					tileSegments = findFeatureNeighbours(id, nextTile, tileSegments, visitedTiles, tiles);
 					break;
 				}
 			}
@@ -136,8 +136,8 @@ function findFeatureNeighbours(id, tile, tileSegments, visitedTiles) {
 			//Check for crossings to the south
 			for (var i = 0; i < paintingInstructions.length; i++) {
 				if (paintingInstructions[i][2] >= 255.9) {
-					var nextTile = findTile (tile, "0,-1");
-					tileSegments = findFeatureNeighbours(id, nextTile, tileSegments, visitedTiles);
+					var nextTile = findTile (tile, "0,-1", tiles);
+					tileSegments = findFeatureNeighbours(id, nextTile, tileSegments, visitedTiles, tiles);
 					break;
 				}
 			}
@@ -145,8 +145,8 @@ function findFeatureNeighbours(id, tile, tileSegments, visitedTiles) {
 			//Check for crossings to the west
 			for (var i = 0; i < paintingInstructions.length; i++) {
 				if (paintingInstructions[i][1] <= 0.1) {
-					var nextTile = findTile (tile, "-1,0");
-					tileSegments = findFeatureNeighbours(id, nextTile, tileSegments, visitedTiles);
+					var nextTile = findTile (tile, "-1,0", tiles);
+					tileSegments = findFeatureNeighbours(id, nextTile, tileSegments, visitedTiles, tiles);
 					break;
 				}
 			}

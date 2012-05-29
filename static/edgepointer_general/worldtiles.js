@@ -78,7 +78,7 @@ function concatenateTiles () {
 			//This is where the local magic happens, recursive function
 			
 			var visitedTiles = new Array();
-			tileSegments = followPointers (tile, segment, id, tileSegments, visitedTiles);
+			tileSegments = followPointers (tile, segment, id, tileSegments, visitedTiles, tiles);
 			
 			for (var m = 1; m <tileSegments.length; m++) {
 				combineSegments (segment, tileSegments[m], offsets_dest);
@@ -94,7 +94,7 @@ function concatenateTiles () {
 	}
 }
 
-function followPointers (tile, segment, id, tileSegments, visitedTiles) {
+function followPointers (tile, segment, id, tileSegments, visitedTiles, tiles) {
 	
 	visitedTiles.push (tile);
 	
@@ -105,33 +105,33 @@ function followPointers (tile, segment, id, tileSegments, visitedTiles) {
 
 	if (segment.getAttribute("edgepointerN") != ",") {
 		
-		var nextTile = findTile (tile, segment.getAttribute("edgepointerN"));
+		var nextTile = findTile (tile, segment.getAttribute("edgepointerN"), tiles);
 		
-		findSegment (nextTile, id, tileSegments, visitedTiles);
+		findSegment (nextTile, id, tileSegments, visitedTiles, tiles);
 		
 	}
 	
 	if (segment.getAttribute("edgepointerE") != ",") {
 
-		var nextTile = findTile (tile, segment.getAttribute("edgepointerE"));
+		var nextTile = findTile (tile, segment.getAttribute("edgepointerE"), tiles);
 		
-		findSegment (nextTile, id, tileSegments, visitedTiles);
+		findSegment (nextTile, id, tileSegments, visitedTiles, tiles);
 		
 	}
 	
 	if (segment.getAttribute("edgepointerS") != ",") {
 
-		var nextTile = findTile (tile, segment.getAttribute("edgepointerS"));
+		var nextTile = findTile (tile, segment.getAttribute("edgepointerS"), tiles);
 		
-		findSegment (nextTile, id, tileSegments, visitedTiles);
+		findSegment (nextTile, id, tileSegments, visitedTiles, tiles);
 		
 	}
 	
 	if (segment.getAttribute("edgepointerW") != ",") {
 
-		var nextTile = findTile (tile, segment.getAttribute("edgepointerW"));
+		var nextTile = findTile (tile, segment.getAttribute("edgepointerW"), tiles);
 		
-		findSegment (nextTile, id, tileSegments, visitedTiles);
+		findSegment (nextTile, id, tileSegments, visitedTiles, tiles);
 		
 	}
 	//We've followed it to the end of the trail!
@@ -140,7 +140,7 @@ function followPointers (tile, segment, id, tileSegments, visitedTiles) {
 
 //Helper function to find segments in a referenced tile
 
-function findSegment (nextTile, id, tileSegments, visitedTiles) {
+function findSegment (nextTile, id, tileSegments, visitedTiles, tiles) {
 	//If it's null it wont be in visitedtiles
 	if (!checkForVisits (nextTile, visitedTiles)) {
 		//Finding the next segment to add
@@ -152,7 +152,7 @@ function findSegment (nextTile, id, tileSegments, visitedTiles) {
 
 				tileSegments.push (nextTile.children[j]);
 				//Searching for pointers outwards
-				followPointers (nextTile, nextTile.children[j], id,  tileSegments, visitedTiles)
+				followPointers (nextTile, nextTile.children[j], id,  tileSegments, visitedTiles, tiles)
 			}
 		}
 	}
