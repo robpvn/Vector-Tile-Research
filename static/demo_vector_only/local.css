@@ -1,0 +1,56 @@
+body {
+  background: #E6E6E6;
+}
+
+
+
+#copy {
+  color: #000;
+  opacity: .5;
+}
+
+#copy a {
+  color: #000;
+}
+
+.building {
+fill: #C48723;
+stroke: #C48723;
+  opacity: 1.0;
+  stroke-width: 0.1px;
+}
+
+.building:hover {
+  fill: #A26501;
+  stroke: #A26501;
+  opacity: 1.0;
+  stroke-width: 0.1px;
+}
+
+.road {
+fill: none;
+  opacity: 1.0;
+  stroke: #B3B3B3;
+  stroke-width: 8px;
+}
+
+.road:hover {
+  fill: none;
+  stroke: #888888;
+  opacity: 1.0;
+  stroke-width: 8px;
+}
+
+.railroad {
+fill: none;
+  opacity: 1.0;
+  stroke: black;
+  stroke-width: 4px;
+}
+
+.railroad:hover {
+  fill: none;
+  stroke: gray;
+  opacity: 1.0;
+  stroke-width: 4px;
+}
