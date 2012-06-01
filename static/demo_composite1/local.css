@@ -25,3 +25,17 @@ fill: lightblue;
   opacity: .5;
   stroke-width: 0.1px;
 }
+
+.road {
+fill: none;
+  opacity: 0.01;
+  stroke: lightblue;
+  stroke-width: 8px;
+}
+
+.road:hover {
+  fill: none;
+  stroke: lightblue;
+  opacity: 0.5;
+  stroke-width: 8px;
+}
